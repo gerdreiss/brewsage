@@ -11,17 +11,23 @@ import System.Exit (ExitCode(ExitSuccess, ExitFailure))
 import System.Process.Typed
 
 brewsage :: IO ()
-brewsage = brewList >>= mapM_ putStrLn
+brewsage = brewList >>= processList
 
 brewList :: IO [String]
 brewList = readProcess "brew list" >>= processResult
 
+processList :: [String] -> IO ()
+processList = mapM_ putStrLn
+
+processFormula :: String -> IO String
+processFormula = return
+
 processResult :: (ExitCode, ByteString, ByteString) -> IO [String]
 processResult input =
   return $
-  case input of
-    (ExitSuccess, out, _) -> formulas out
-    (ExitFailure code, _, err) -> errors code err
+    case input of
+      (ExitSuccess, out, _) -> formulas out
+      (ExitFailure code, _, err) -> errors code err
 
 formulas :: ByteString -> [String]
 formulas = splitOn "\n" . unpack
