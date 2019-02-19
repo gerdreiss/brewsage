@@ -10,20 +10,20 @@ import Data.List.Split
 import System.Exit (ExitCode(ExitSuccess, ExitFailure))
 import System.Process.Typed
 
+
 brewsage :: IO ()
-brewsage = brewList >>= processList
+brewsage = readProcess "brew list" >>= listFormulas >>= processFormulas
 
-brewList :: IO [String]
-brewList = readProcess "brew list" >>= processResult
 
-processList :: [String] -> IO ()
-processList = mapM_ putStrLn
+processFormulas :: [String] -> IO ()
+processFormulas = mapM_ putStrLn
 
 processFormula :: String -> IO String
 processFormula = return
 
-processResult :: (ExitCode, ByteString, ByteString) -> IO [String]
-processResult input =
+
+listFormulas :: (ExitCode, ByteString, ByteString) -> IO [String]
+listFormulas input =
   return $
     case input of
       (ExitSuccess, out, _) -> formulas out
