@@ -41,9 +41,6 @@ processDependents :: String -> [String] -> IO ()
 processDependents formula dependents =
   mapM_ putStr [formula, ": ", unwords dependents, "\n"]
 
-processDependent :: String -> IO ()
-processDependent = putStrLn
-
 mkStringList :: ByteString -> [String]
 mkStringList = splitOn "\n" . unpack
 
