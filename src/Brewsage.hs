@@ -22,22 +22,24 @@ listFormulas input =
     (ExitFailure code, _, err) -> errors code err
 
 processFormulas :: [String] -> IO ()
-processFormulas = mapM_ putStrLn
+processFormulas = mapM_ processFormula
 
-processFormula :: String -> IO [String]
-processFormula formula = execBrewdeps >>= listDependents
+processFormula :: String -> IO ()
+processFormula formula =
+  execBrewdeps >>= listDependents >>= processDependents formula
   where
     execBrewdeps = readProcess $ proc "brew" ["uses", "--installed", formula]
 
 listDependents :: (ExitCode, ByteString, ByteString) -> IO [String]
 listDependents input =
   return $
-    case input of
-      (ExitSuccess, out, _) -> mkStringList out
-      (ExitFailure code, _, err) -> errors code err
+  case input of
+    (ExitSuccess, out, _) -> mkStringList out
+    (ExitFailure code, _, err) -> errors code err
 
-processDependents :: [String] -> IO ()
-processDependents = mapM_ putStrLn
+processDependents :: String -> [String] -> IO ()
+processDependents formula dependents =
+  mapM_ putStr [formula, ": ", unwords dependents, "\n"]
 
 processDependent :: String -> IO ()
 processDependent = putStrLn
