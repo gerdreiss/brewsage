@@ -17,9 +17,9 @@ brewsage = readProcess "brew list" >>= listFormulas >>= processFormulas
 listFormulas :: (ExitCode, ByteString, ByteString) -> IO [String]
 listFormulas input =
   return $
-  case input of
-    (ExitSuccess, out, _) -> mkStringList out
-    (ExitFailure code, _, err) -> errors code err
+    case input of
+      (ExitSuccess, out, _) -> toFormulaList out
+      (ExitFailure code, _, err) -> toErrorList code err
 
 processFormulas :: [String] -> IO ()
 processFormulas = mapM_ processFormula
@@ -34,21 +34,21 @@ listDependents :: (ExitCode, ByteString, ByteString) -> IO [String]
 listDependents input =
   return $
   case input of
-    (ExitSuccess, out, _) -> mkStringList out
-    (ExitFailure code, _, err) -> errors code err
+    (ExitSuccess, out, _) -> toFormulaList out
+    (ExitFailure code, _, err) -> toErrorList code err
 
 processDependents :: String -> [String] -> IO ()
 processDependents formula dependents =
   mapM_ putStr [formula, ": ", unwords dependents, "\n"]
 
-mkStringList :: ByteString -> [String]
-mkStringList = splitOn "\n" . unpack
+toFormulaList :: ByteString -> [String]
+toFormulaList = splitOn "\n" . unpack
 
-errors :: Int -> ByteString -> [String]
-errors code err = ["Error occured:", codeMessage code, errorMessage err]
+toErrorList :: Int -> ByteString -> [String]
+toErrorList code err = ["Error occurred while invoking homebrew", codeMessage code, errorMessage err]
 
 codeMessage :: Int -> String
-codeMessage code = "Code    -> " ++ show code
+codeMessage code = "Code   -> " ++ show code
 
 errorMessage :: ByteString -> String
-errorMessage err = "Message -> " ++ unpack err
+errorMessage err = "Error  -> " ++ unpack err
