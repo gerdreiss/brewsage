@@ -14,7 +14,7 @@ import           System.Process.Typed       (proc, readProcess)
 -- main function of the module
 -- executes 'brew list', extracts list of formulas, and processes each of them
 brewsage :: IO ()
-brewsage = readProcess "brew list" >>= listFormulas >>= processFormulas
+brewsage = readProcess "brew list" >>= listFormulas >>= mapM_ processFormula
 
 -- extracts list of formulas or errors out of a byte string
 listFormulas :: (ExitCode, ByteString, ByteString) -> IO [String]
@@ -23,10 +23,6 @@ listFormulas input =
     case input of
       (ExitSuccess, out, _)      -> toFormulaList out
       (ExitFailure code, _, err) -> toErrorList code err
-
--- processes a list of formulas
-processFormulas :: [String] -> IO ()
-processFormulas = mapM_ processFormula
 
 -- processes the given formula
 processFormula :: String -> IO ()
