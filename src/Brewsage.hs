@@ -69,11 +69,3 @@ deleteFormula formula = do
 -- extracts a list of strings out of the given byte string
 toFormulaList :: ByteString -> [String]
 toFormulaList = splitOn "\n" . unpack
-
--- creates a message for the given error code
-codeMessage :: Int -> String
-codeMessage code = "Code   -> " ++ show code
-
--- creates a message for the given error message
-errorMessage :: ByteString -> String
-errorMessage err = "Error  -> " ++ unpack err
