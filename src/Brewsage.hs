@@ -22,7 +22,7 @@ listFormulas input =
   return $
     case input of
       (ExitSuccess, out, _)      -> toFormulaList out
-      (ExitFailure code, _, err) -> toErrorList code err
+      (ExitFailure code, _, err) -> error $ unpack err
 
 -- processes the given formula
 processFormula :: String -> IO ()
