@@ -9,7 +9,7 @@ import           Data.ByteString.Lazy.Char8 (unpack)
 import           Data.List.Split            (splitOn)
 import           System.Exit                (ExitCode (ExitFailure, ExitSuccess), exitSuccess)
 import           System.IO                  (hFlush, stdout)
-import           System.Process.Typed       (proc, readProcess, runProcess, runProcess_)
+import           System.Process.Typed       (proc, readProcess)
 
 -- main function of the module
 -- executes 'brew list', extracts list of formulas, and processes each of them
@@ -26,10 +26,11 @@ listFormulas input =
 
 -- processes the given formula
 processFormula :: String -> IO ()
-processFormula formula =
-  execBrewdeps >>= listDependents >>= processDependents formula
-  where
-    execBrewdeps = readProcess $ proc "brew" ["uses", "--installed", formula]
+processFormula formula = brewdeps formula >>= listDependents >>= processDependents formula
+
+-- check for dependents of the given formula
+brewdeps :: String -> IO (ExitCode, ByteString, ByteString)
+brewdeps formula = readProcess $ proc "brew" ["uses", "--installed", formula]
 
 -- extracts list of dependents of the given formula out of byte string
 listDependents :: (ExitCode, ByteString, ByteString) -> IO [String]
