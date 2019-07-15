@@ -48,13 +48,13 @@ instance Read Answer where
     case map toLower . filter isLetter $ input of
       "quit" -> [(Quit, [])]
       "q"    -> [(Quit, [])]
-      "yes"  -> [(Yes, [])]
-      "y"    -> [(Yes, [])]
-      "nope" -> [(No, [])]
-      "no"   -> [(No, [])]
-      "n"    -> [(No, [])]
-      ""     -> [(No, [])]
-      _      -> [(Que, [])]
+      "yes"  -> [(Yes,  [])]
+      "y"    -> [(Yes,  [])]
+      "nope" -> [(No,   [])]
+      "no"   -> [(No,   [])]
+      "n"    -> [(No,   [])]
+      ""     -> [(No,   [])]
+      _      -> [(Que,  [])]
 
 --
 --
