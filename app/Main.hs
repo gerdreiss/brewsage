@@ -1,6 +1,10 @@
 module Main where
 
-import Brewsage
+import           Brewsage2
+import           Data.Either (lefts, rights)
 
 main :: IO ()
-main = brewsage
+main = readFormulasWithUsages >>= printUsed
+  where
+    printUsed = putStrLn . concatMap show . filter (not . null . dependents) . rights
+             -- putStrLn . concatMap show . lefts

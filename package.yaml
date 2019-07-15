@@ -24,6 +24,8 @@ dependencies:
 - typed-process
 - bytestring
 - split
+- parallel
+- deepseq
 
 library:
   source-dirs: src

@@ -66,8 +66,6 @@ readFormulasWithUsages = do
     Right formulas -> traverse readFormulaUsage formulas
     Left error     -> return [Left error]
 
---
---
 -- list all formulas
 readFormulas :: IO (Either BrewError [BrewFormula])
 readFormulas = procBrewResult <$> execBrewList
