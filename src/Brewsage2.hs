@@ -5,7 +5,7 @@ module Brewsage2 where
 import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
 
-import           Control.Concurrent.ParallelIO
+import           Control.Concurrent.ParallelIO (parallel)
 
 import           Data.Char                     (isLetter, toLower)
 import           Data.List                     (intercalate)
