@@ -2,14 +2,17 @@
 
 module Brewsage2 where
 
-import qualified Data.ByteString.Lazy       as B
-import qualified Data.ByteString.Lazy.Char8 as C8
+import qualified Data.ByteString.Lazy          as B
+import qualified Data.ByteString.Lazy.Char8    as C8
 
-import           Data.Char                  (isLetter, toLower)
-import           Data.List                  (intercalate)
+import           Control.Concurrent.ParallelIO
+
+import           Data.Char                     (isLetter, toLower)
+import           Data.List                     (intercalate)
+
 import           System.Exit
-import           System.IO                  (hFlush, stdout)
-import           System.Process.Typed       (proc, readProcess)
+import           System.IO                     (hFlush, stdout)
+import           System.Process.Typed          (proc, readProcess)
 
 type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 
@@ -63,7 +66,7 @@ readFormulasWithUsages :: IO [Either BrewError BrewFormula]
 readFormulasWithUsages = do
   errorOrFormulas <- readFormulas
   case errorOrFormulas of
-    Right formulas -> traverse readFormulaUsage formulas
+    Right formulas -> parallel $ map readFormulaUsage formulas
     Left error     -> return [Left error]
 
 -- list all formulas

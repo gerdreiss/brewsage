@@ -24,8 +24,8 @@ dependencies:
 - typed-process
 - bytestring
 - split
-- parallel
-- deepseq
+- parallel-io
+- time
 
 library:
   source-dirs: src
