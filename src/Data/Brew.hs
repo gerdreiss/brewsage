@@ -15,10 +15,10 @@ data BrewFormula =
 instance Show BrewFormula where
   show formula =
     (C8.unpack . name $ formula) ++
-    case dependents formula of
-      []       -> " is not used by any other formula.\n"
-      formulas -> " is used by " ++ formulaNames formulas ++ ".\n"
-        where formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
+      case dependents formula of
+        []       -> " is not used by any other formula.\n"
+        formulas -> " is used by " ++ formulaNames formulas ++ ".\n"
+          where formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
 
 data BrewError =
   BrewError
@@ -41,10 +41,10 @@ instance Read Answer where
     case map toLower . filter isLetter $ input of
       "quit" -> [(Quit, [])]
       "q"    -> [(Quit, [])]
-      "yes"  -> [(Yes, [])]
-      "y"    -> [(Yes, [])]
-      "nope" -> [(No, [])]
-      "no"   -> [(No, [])]
-      "n"    -> [(No, [])]
-      ""     -> [(No, [])]
-      _      -> [(Que, [])]
+      "yes"  -> [(Yes,  [])]
+      "y"    -> [(Yes,  [])]
+      "nope" -> [(No,   [])]
+      "no"   -> [(No,   [])]
+      "n"    -> [(No,   [])]
+      ""     -> [(No,   [])]
+      _      -> [(Que,  [])]

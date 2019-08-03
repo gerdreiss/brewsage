@@ -1,8 +1,12 @@
 module Control.Brew.Maintenance where
 
+import           Control.Monad
 import           Data.Brew
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           System.IO                  (hFlush, stdout)
+
+askDeleteFormulas :: [BrewFormula] -> IO ()
+askDeleteFormulas formulas = putStrLn $ "processing formulas:\n" ++ concatMap show formulas
 
 --
 --
