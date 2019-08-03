@@ -1,7 +1,9 @@
 module Main where
 
-import           Brewsage2
-import           Data.Either (lefts, rights)
+import           Control.Brew.Usage (readFormulasWithUsages)
+
+import           Data.Brew
+import           Data.Either        (lefts, rights)
 import           Data.Time
 
 main :: IO ()
