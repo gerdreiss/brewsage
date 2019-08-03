@@ -1,5 +1,7 @@
 .idea
 .stack-work/
 out/
+brewsage.iml
 brewsage.cabal
+*.lock
 *~
