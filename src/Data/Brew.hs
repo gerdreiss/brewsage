@@ -16,8 +16,8 @@ instance Show BrewFormula where
   show formula =
     (C8.unpack . name $ formula) ++
       case dependents formula of
-        []       -> " is not used by any other formula.\n"
-        formulas -> " is used by " ++ formulaNames formulas ++ ".\n"
+        []       -> " is not used by any other formula."
+        formulas -> " is used by " ++ formulaNames formulas ++ "."
           where formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
 
 data BrewError =
@@ -43,7 +43,6 @@ instance Read Answer where
       "q"    -> [(Quit, [])]
       "yes"  -> [(Yes,  [])]
       "y"    -> [(Yes,  [])]
-      "nope" -> [(No,   [])]
       "no"   -> [(No,   [])]
       "n"    -> [(No,   [])]
       ""     -> [(No,   [])]

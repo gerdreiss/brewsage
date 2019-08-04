@@ -29,7 +29,7 @@ procFormula formula
       No   -> return ()
       Yes  -> deleteFormula formula
       Quit -> putStrLn "Exit..." >> exitSuccess
-      Que  -> putStrLn "Did not understand your answer. Try again." >> procFormula formula
+      Que  -> putStrLn "Did not get that. Try again." >> procFormula formula
 
 -- ask the user whether to delete the unused formula
 askDeleteFormula :: BrewFormula -> IO Answer
