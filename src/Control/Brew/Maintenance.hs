@@ -4,10 +4,9 @@ module Control.Brew.Maintenance
   ) where
 
 import           Data.Brew
-import qualified Data.ByteString.Lazy.Char8 as C8
+import           Data.ByteString.Lazy.Char8 (unpack)
 import           Data.List                  (intercalate)
-import           System.Exit                (ExitCode (ExitFailure, ExitSuccess),
-                                             exitSuccess)
+import           System.Exit                (ExitCode (..), exitSuccess)
 import           System.IO                  (hFlush, stdout)
 import           System.Process.Typed       (proc, readProcess)
 
@@ -34,14 +33,14 @@ procFormula formula
 -- ask the user whether to delete the unused formula
 askDeleteFormula :: BrewFormula -> IO Answer
 askDeleteFormula formula = do
-  putStr $ (C8.unpack . name $ formula) ++ " is not used by any other formula. Delete? (y/N) "
+  putStr $ (unpack . name $ formula) ++ " is not used by any other formula. Delete? (y/N) "
   hFlush stdout
   read <$> getLine
 
 -- delete the given formula
 deleteFormula :: BrewFormula -> IO ()
 deleteFormula formula = do
-  input <- readProcess $ proc "brew" ["uninstall", C8.unpack . name $ formula]
+  input <- readProcess $ proc "brew" ["uninstall", unpack . name $ formula]
   case input of
     (ExitSuccess  , out,   _) -> print out
     (ExitFailure _,   _, err) -> print err
