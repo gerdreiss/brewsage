@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Control.Brew.Usage
-  ( readFormulasWithUsages
+  ( readFormulas
+  , readFormulasWithUsages
   ) where
 
 import           Control.Concurrent.ParallelIO (parallel)
@@ -19,30 +20,33 @@ type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 --
 -- list all formulas with respective usages
 readFormulasWithUsages :: IO [Either BrewError BrewFormula]
-readFormulasWithUsages = do
-  errorOrFormulas <- readFormulas
-  case errorOrFormulas of
-    Right formulas -> parallel $ map readFormulaUsage formulas
-    Left error     -> return [Left error]
+readFormulasWithUsages = readFormulas >>= procErrorOrFormulas
 
 -- list all formulas
 readFormulas :: IO (Either BrewError [BrewFormula])
 readFormulas = procBrewResult <$> execBrewList
 
+-- process error or retrieve usage for the given formulas
+procErrorOrFormulas :: Either BrewError [BrewFormula] -> IO [Either BrewError BrewFormula]
+procErrorOrFormulas (Right formulas) = parallel $ map readFormulaUsage formulas
+procErrorOrFormulas (Left error    ) = return [Left error]
+
 --
 --
--- list dependents for the given formula
+-- get dependents of and assign them to the given formula
 readFormulaUsage :: BrewFormula -> IO (Either BrewError BrewFormula)
 readFormulaUsage formula = do
   usage <- readFormulaUsageByName . name $ formula
-  return $
-    case usage of
-      Right formulas -> Right $ formula {dependents = formulas}
-      Left error     -> Left error
+  return $ procErrorOrFormulaUsage formula usage
 
 -- list dependents for the given formula name
 readFormulaUsageByName :: B.ByteString -> IO (Either BrewError [BrewFormula])
 readFormulaUsageByName formula = procBrewResult <$> execBrewDeps formula
+
+-- process error or assign retrieved dependent formulas to the given formula
+procErrorOrFormulaUsage :: BrewFormula -> Either BrewError [BrewFormula] -> Either BrewError BrewFormula
+procErrorOrFormulaUsage formula (Right formulas) = Right $ formula {dependents = formulas}
+procErrorOrFormulaUsage _       (Left error    ) = Left error
 
 --
 --
@@ -56,7 +60,5 @@ execBrewDeps formula = readProcess $ proc "brew" ["uses", "--installed", C8.unpa
 
 -- process results of a brew command that returns a list of formulas
 procBrewResult :: ReadProcessResult -> Either BrewError [BrewFormula]
-procBrewResult input =
-  case input of
-    (ExitSuccess     , out, _  ) -> Right $ map (\s -> BrewFormula s []) (C8.words out)
-    (ExitFailure code, _  , err) -> Left $ BrewError code err
+procBrewResult (ExitSuccess     , out,   _) = Right $ map (\s -> BrewFormula s []) (C8.words out)
+procBrewResult (ExitFailure code,   _, err) = Left $ BrewError code err
