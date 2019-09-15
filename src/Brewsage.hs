@@ -18,11 +18,8 @@ brewsage = readProcess "brew list" >>= listFormulas >>= mapM_ processFormula >>=
 
 -- extracts list of formulas or errors out of a byte string
 listFormulas :: (ExitCode, ByteString, ByteString) -> IO [String]
-listFormulas input =
-  return $
-  case input of
-    (ExitSuccess, out, _)   -> toFormulaList out
-    (ExitFailure _, _, err) -> error $ unpack err
+listFormulas (ExitSuccess, out, _)   = return $ toFormulaList out
+listFormulas (ExitFailure _, _, err) = return $ error $ unpack err
 
 -- processes the given formula
 processFormula :: String -> IO ()
@@ -34,11 +31,8 @@ brewdeps formula = readProcess $ proc "brew" ["uses", "--installed", formula]
 
 -- extracts list of dependents of the given formula out of byte string
 listDependents :: (ExitCode, ByteString, ByteString) -> IO [String]
-listDependents input =
-  return $
-  case input of
-    (ExitSuccess, out, _)   -> toFormulaList out
-    (ExitFailure _, _, err) -> error $ unpack err
+listDependents (ExitSuccess, out, _)   = return $ toFormulaList out
+listDependents (ExitFailure _, _, err) = return $ error $ unpack err
 
 -- processes each of the dependents of the given formula
 processDependents :: String -> [String] -> IO ()
