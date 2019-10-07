@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Brewsage
+module Brewsage {-# DEPRECATED "Use Control.Brew.Maintenance or Control.Brew.Usage instead" #-}
   ( brewsage
   ) where
 
