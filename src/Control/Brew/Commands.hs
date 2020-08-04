@@ -34,5 +34,5 @@ execBrewUses formula = readProcess $ proc "brew" ["uses", "--installed", C8.unpa
 
 -- process results of a brew command that returns a list of formulas
 procBrewResult :: ReadProcessResult -> Either BrewError [BrewFormula]
-procBrewResult (ExitSuccess     , out, _  ) = Right $ map (\s -> BrewFormula s []) (C8.words out)
+procBrewResult (ExitSuccess     , out, _  ) = Right $ map (`BrewFormula` []) (C8.words out)
 procBrewResult (ExitFailure code, _  , err) = Left $ BrewError code err
