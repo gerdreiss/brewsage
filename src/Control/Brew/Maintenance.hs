@@ -40,7 +40,7 @@ procFormula formula
 -- ask the user whether to delete the unused formula
 askDeleteFormula :: BrewFormula -> IO Answer
 askDeleteFormula formula = do
-  putStr $ (unpack . name $ formula) ++ " is not used by any other formula. Delete? (y/N) "
+  putStr (show formula ++ "Delete? (q/y/N) ")
   hFlush stdout
   read <$> getLine
 

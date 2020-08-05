@@ -14,12 +14,16 @@ data BrewFormula = BrewFormula
   }
 
 instance Show BrewFormula where
-  show formula = (C8.unpack . name $ formula) ++ case dependants formula of
-    []       -> " is not used by any other formula."
-    formulas -> " is used by " ++ formulaNames formulas ++ "."
-     where
-      formulaNames formulas =
-        intercalate ", " (map (C8.unpack . name) formulas)
+  show formula = concat
+    ["\n", C8.unpack . name $ formula, "\n", dependencyList, "\n", dependantList, "\n"]
+   where
+    dependencyList = case dependencies formula of
+      []       -> " has no dependencies"
+      formulas -> " depends on " ++ formulaNames formulas
+    dependantList  = case dependants formula of
+      []       -> " is not used by any other formula"
+      formulas -> " is used by " ++ formulaNames formulas
+    formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
 
 data BrewError = BrewError
   { code :: Int,
@@ -27,12 +31,8 @@ data BrewError = BrewError
   }
 
 instance Show BrewError where
-  show error = concat
-    [ "Error occurred: code "
-    , show . code $ error
-    , " message "
-    , show . message $ error
-    ]
+  show error =
+    concat ["Error occurred: code ", show . code $ error, " message ", show . message $ error]
 
 data Answer
   = Yes

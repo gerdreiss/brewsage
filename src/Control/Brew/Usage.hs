@@ -35,10 +35,10 @@ readFormulaUsage formula = do
 
 -- process error or assign retrieved dependent formulas to the given formula
 procErrorOrFormulaUsage
-  :: BrewFormula
-  -> Either BrewError [BrewFormula]
-  -> Either BrewError [BrewFormula]
-  -> Either BrewError BrewFormula
+  :: BrewFormula                      -- the formula
+  -> Either BrewError [BrewFormula]   -- the dependants
+  -> Either BrewError [BrewFormula]   -- the dependencies
+  -> Either BrewError BrewFormula     -- the formula including the dependants and the dependencies
 procErrorOrFormulaUsage formula (Right dependants) (Right dependencies) =
   Right $ formula { dependants = dependants, dependencies = dependencies }
 procErrorOrFormulaUsage _ (Left error) _            = Left error

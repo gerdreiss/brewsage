@@ -56,4 +56,4 @@ processInfoResult (ExitSuccess     , out, _  ) = Right formulas where
   formulas     = map (\dependency -> BrewFormula dependency [] []) dependencies
   dependencies = case safeHead . safeTail . dropWhile (/= "==> Dependencies") . C8.lines $ out of
     Nothing   -> []
-    Just line -> filter (C8.elem ',') $ C8.words line
+    Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line
