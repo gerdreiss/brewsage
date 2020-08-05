@@ -30,10 +30,16 @@ procErrorOrFormulas (Left  error   ) = return [Left error]
 readFormulaUsage :: BrewFormula -> IO (Either BrewError BrewFormula)
 readFormulaUsage formula = do
   usage <- listDependants formula
-  return $ procErrorOrFormulaUsage formula usage
+  deps  <- listDependencies formula
+  return $ procErrorOrFormulaUsage formula usage deps
 
 -- process error or assign retrieved dependent formulas to the given formula
 procErrorOrFormulaUsage
-  :: BrewFormula -> Either BrewError [BrewFormula] -> Either BrewError BrewFormula
-procErrorOrFormulaUsage formula (Right formulas) = Right $ formula { dependants = formulas }
-procErrorOrFormulaUsage _       (Left  error   ) = Left error
+  :: BrewFormula
+  -> Either BrewError [BrewFormula]
+  -> Either BrewError [BrewFormula]
+  -> Either BrewError BrewFormula
+procErrorOrFormulaUsage formula (Right dependants) (Right dependencies) =
+  Right $ formula { dependants = dependants, dependencies = dependencies }
+procErrorOrFormulaUsage _ (Left error) _            = Left error
+procErrorOrFormulaUsage _ _            (Left error) = Left error
