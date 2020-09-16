@@ -6,12 +6,6 @@ where
 import           Control.Brew.Commands
 import           Control.Concurrent.ParallelIO  ( parallel )
 import           Data.Brew
-import qualified Data.ByteString.Lazy          as B
-import qualified Data.ByteString.Lazy.Char8    as C8
-import           System.Exit
-import           System.Process.Typed           ( proc
-                                                , readProcess
-                                                )
 
 --
 --
@@ -22,7 +16,7 @@ listFormulasWithDependants = listFormulas >>= procErrorOrFormulas
 -- process error or retrieve usage for the given formulas
 procErrorOrFormulas :: Either BrewError [BrewFormula] -> IO [Either BrewError BrewFormula]
 procErrorOrFormulas (Right formulas) = parallel $ map readFormulaUsage formulas
-procErrorOrFormulas (Left  error   ) = return [Left error]
+procErrorOrFormulas (Left  err     ) = return [Left err]
 
 --
 --
@@ -39,7 +33,7 @@ procErrorOrFormulaUsage
   -> Either BrewError [BrewFormula]   -- the dependants
   -> Either BrewError [BrewFormula]   -- the dependencies
   -> Either BrewError BrewFormula     -- the formula including the dependants and the dependencies
-procErrorOrFormulaUsage formula (Right dependants) (Right dependencies) =
-  Right $ formula { dependants = dependants, dependencies = dependencies }
-procErrorOrFormulaUsage _ (Left error) _            = Left error
-procErrorOrFormulaUsage _ _            (Left error) = Left error
+procErrorOrFormulaUsage formula (Right dpns) (Right deps) =
+  Right $ formula { dependants = dpns, dependencies = deps }
+procErrorOrFormulaUsage _ (Left err) _          = Left err
+procErrorOrFormulaUsage _ _          (Left err) = Left err

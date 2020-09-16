@@ -1,8 +1,6 @@
 module Main where
 
-import           Control.Brew.Maintenance       ( procFormulas )
 import           Control.Brew.Usage             ( listFormulasWithDependants )
-import           Data.Brew
 import           Data.Either                    ( lefts
                                                 , rights
                                                 )

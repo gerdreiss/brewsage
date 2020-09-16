@@ -1,23 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Tui.Main where
+module Tui.Main
+  ( tui
+  )
+where
 
 import           Brick.AttrMap
 import           Brick.Main
 import           Brick.Types
 import           Brick.Util
-import qualified Brick.Widgets.Center          as C
-import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
 import           Brick.Widgets.Core
 import           Cursor.Simple.List.NonEmpty
 import           Data.Brew
-import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe
 import           Graphics.Vty.Attributes
 import           Graphics.Vty.Input.Events
+import qualified Tui.Widgets                   as W
 
 data TuiState = TuiState
   { title :: String
@@ -37,11 +38,10 @@ tui fs = do
   print $ fmap (C8.unpack . name) (formulas endState)
 
 buildInitialState :: [BrewFormula] -> IO TuiState
-buildInitialState formulas = do
-  let fs = NE.nonEmpty formulas
-      df = NE.nonEmpty
-        [BrewFormula { name = "", dependencies = [], dependants = [] }]
-  case fs of
+buildInitialState fs = do
+  let maybeFormulas = NE.nonEmpty fs
+      df = NE.nonEmpty [BrewFormula { name = "", dependencies = [], dependants = [] }]
+  case maybeFormulas of
     Nothing -> pure TuiState { title    = "Brewsage"
                              , status   = "No formulas found"
                              , formulas = makeNonEmptyCursor $ fromJust df
@@ -64,46 +64,12 @@ tuiApp = App { appDraw         = drawTui
 drawTui :: TuiState -> [Widget FormulaName]
 drawTui s =
   let t   = title s
-      st  = status s
       fs  = formulas s
       sel = selected s
-  in  [ withBorderStyle BS.unicodeBold $ vBox
-          [ withBorderStyle BS.unicodeBold
-          $ B.border
-          $ vLimit 1
-          $ C.vCenter
-          $ C.hCenter
-          $ vBox [str t]
-          , hBox
-            [ withBorderStyle BS.unicodeBold
-            $ B.border
-            $ hLimit 20
-            $ C.vCenter
-            $ C.hCenter
-            $ vBox
-            $ concat
-                [ map (drawFormula False) . reverse . nonEmptyCursorPrev $ fs
-                , [drawFormula True $ nonEmptyCursorCurrent fs]
-                , map (drawFormula False) $ nonEmptyCursorNext fs
-                ]
-            , withBorderStyle BS.unicodeBold
-            $ B.border
-            $ C.vCenter
-            $ C.hCenter
-            $ vBox [str $ maybe " selected formula " show sel]
-            ]
-          , withBorderStyle BS.unicodeBold
-          $ B.border
-          $ vLimit 1
-          $ C.vCenter
-          $ C.hCenter
-          $ vBox [str st]
-          ]
+      st  = status s
+  in  [ withBorderStyle BS.unicodeBold
+          $ vBox [W.title t, hBox [W.formulas fs, W.selected sel], W.status st]
       ]
-
-drawFormula :: Bool -> BrewFormula -> Widget n
-drawFormula b =
-  (if b then withAttr "selected" else id) . str . C8.unpack . name
 
 handleTuiEvent :: TuiState -> BrickEvent n e -> EventM n (Next TuiState)
 handleTuiEvent s e = case e of
@@ -120,7 +86,7 @@ handleTuiEvent s e = case e of
         Nothing   -> continue s
         Just nec' -> continue $ s { formulas = nec' }
     EvKey KEnter      [] -> do
-      let selected = nonEmptyCursorCurrent $ formulas s
-      continue s { selected = Just selected }
+      let sel = nonEmptyCursorCurrent $ formulas s
+      continue s { selected = Just sel }
     _                    -> continue s
   _             -> continue s

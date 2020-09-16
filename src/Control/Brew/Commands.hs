@@ -38,7 +38,8 @@ execBrewList = readProcess "brew list"
 
 -- execute "brew uses --installed" for the given formula
 execBrewUses :: B.ByteString -> IO ReadProcessResult
-execBrewUses formula = readProcess $ proc "brew" ["uses", "--installed", C8.unpack formula]
+execBrewUses formula =
+  readProcess $ proc "brew" ["uses", "--installed", C8.unpack formula]
 
 -- execute "brew info" for the given formula
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
@@ -46,14 +47,15 @@ execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
 
 -- process results of a brew command that returns a list of formulas
 processListResult :: ReadProcessResult -> ErrorOrFormulas
-processListResult (ExitFailure code, _, err) = Left $ BrewError code err
-processListResult (ExitSuccess, out, _) = Right $ map (\s -> BrewFormula s [] []) (C8.words out)
+processListResult (ExitFailure cd, _, err) = Left $ BrewError cd err
+processListResult (ExitSuccess, out, _) =
+  Right $ map (\s -> BrewFormula s [] []) (C8.words out)
 
 -- process results of a brew info command
 processInfoResult :: ReadProcessResult -> ErrorOrFormulas
-processInfoResult (ExitFailure code, _  , err) = Left $ BrewError code err
-processInfoResult (ExitSuccess     , out, _  ) = Right formulas where
-  formulas     = map (\dependency -> BrewFormula dependency [] []) dependencies
-  dependencies = case safeHead . safeTail . dropWhile (/= "==> Dependencies") . C8.lines $ out of
+processInfoResult (ExitFailure cd, _  , err) = Left $ BrewError cd err
+processInfoResult (ExitSuccess   , out, _  ) = Right formulas where
+  formulas = map (\dependency -> BrewFormula dependency [] []) deps
+  deps = case safeHead . safeTail . dropWhile (/= "==> Dependencies") . C8.lines $ out of
     Nothing   -> []
     Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line

@@ -51,7 +51,7 @@ conf_layout:
   lconfig_indentAmount: 2
   lconfig_alignmentBreakOnMultiline: false
   lconfig_experimentalSemicolonNewlines: false
-  lconfig_cols: 80
+  lconfig_cols: 90
   lconfig_indentPolicy: IndentPolicyFree
   lconfig_indentWhereSpecial: true
   lconfig_columnAlignMode:

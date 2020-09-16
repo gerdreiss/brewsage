@@ -34,8 +34,8 @@ data BrewError = BrewError
   }
 
 instance Show BrewError where
-  show error =
-    concat ["Error occurred: code ", show . code $ error, " message ", show . message $ error]
+  show err =
+    concat ["Error occurred: code ", show . code $ err, " message ", show . message $ err]
 
 data Answer
   = Yes

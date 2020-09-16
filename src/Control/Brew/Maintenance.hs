@@ -6,7 +6,6 @@ where
 
 import           Data.Brew
 import           Data.ByteString.Lazy.Char8     ( unpack )
-import           Data.List                      ( intercalate )
 import           System.Exit                    ( ExitCode(..)
                                                 , exitSuccess
                                                 )

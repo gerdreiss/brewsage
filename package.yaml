@@ -41,6 +41,10 @@ executables:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+      - -Wall
+      - -Werror
+      - -Wunused-imports
+      - -Wwarn=unused-imports
     dependencies:
       - brewsage
 
