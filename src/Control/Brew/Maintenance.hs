@@ -4,7 +4,9 @@ module Control.Brew.Maintenance
   )
 where
 
-import           Data.Brew
+import           Data.Brew                      ( Answer(..)
+                                                , BrewFormula(..)
+                                                )
 import           Data.ByteString.Lazy.Char8     ( unpack )
 import           System.Exit                    ( ExitCode(..)
                                                 , exitSuccess

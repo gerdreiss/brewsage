@@ -3,9 +3,14 @@ module Control.Brew.Usage
   )
 where
 
-import           Control.Brew.Commands
+import           Control.Brew.Commands          ( listFormulas
+                                                , listDependants
+                                                , listDependencies
+                                                )
 import           Control.Concurrent.ParallelIO  ( parallel )
-import           Data.Brew
+import           Data.Brew                      ( BrewError
+                                                , BrewFormula(..)
+                                                )
 
 --
 --

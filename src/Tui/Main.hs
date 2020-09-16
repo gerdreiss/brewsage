@@ -5,28 +5,40 @@ module Tui.Main
   )
 where
 
-import           Brick.AttrMap
-import           Brick.Main
-import           Brick.Types
-import           Brick.Util
 import qualified Brick.Widgets.Border.Style    as BS
-import           Brick.Widgets.Core
-import           Cursor.Simple.List.NonEmpty
-import           Data.Brew
 import qualified Data.ByteString.Lazy.Char8    as C8
-import qualified Data.List.NonEmpty            as NE
-import           Data.Maybe
-import           Graphics.Vty.Attributes
-import           Graphics.Vty.Input.Events
 import qualified Tui.Widgets                   as W
 
-data TuiState = TuiState
-  { title :: String
-  , status :: String
-  , formulas :: NonEmptyCursor BrewFormula
-  , selected :: Maybe BrewFormula
-  }
-  deriving (Show, Eq)
+import           Brick.AttrMap                  ( attrMap )
+import           Brick.Main                     ( continue
+                                                , defaultMain
+                                                , halt
+                                                , showFirstCursor
+                                                , App(..)
+                                                )
+import           Brick.Types                    ( Widget
+                                                , BrickEvent(VtyEvent)
+                                                , EventM
+                                                , Next
+                                                )
+import           Brick.Util                     ( fg )
+import           Brick.Widgets.Core             ( hBox
+                                                , vBox
+                                                , withBorderStyle
+                                                )
+import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorSelectNext
+                                                , nonEmptyCursorSelectPrev
+                                                , nonEmptyCursorCurrent
+                                                )
+import           Data.Brew                      ( BrewFormula(name) )
+import           Graphics.Vty.Attributes        ( red )
+import           Graphics.Vty.Input.Events      ( Event(EvKey)
+                                                , Key(KEnter, KChar, KDown, KUp)
+                                                )
+import           Tui.State                      ( TuiState(..)
+                                                , buildInitialState
+                                                )
+
 
 data FormulaName = FormulaName
   deriving (Eq, Show, Ord)
@@ -36,22 +48,6 @@ tui fs = do
   initialState <- buildInitialState fs
   endState     <- defaultMain tuiApp initialState
   print $ fmap (C8.unpack . name) (formulas endState)
-
-buildInitialState :: [BrewFormula] -> IO TuiState
-buildInitialState fs = do
-  let maybeFormulas = NE.nonEmpty fs
-      df = NE.nonEmpty [BrewFormula { name = "", dependencies = [], dependants = [] }]
-  case maybeFormulas of
-    Nothing -> pure TuiState { title    = "Brewsage"
-                             , status   = "No formulas found"
-                             , formulas = makeNonEmptyCursor $ fromJust df
-                             , selected = Nothing
-                             }
-    Just ne -> pure TuiState { title    = "Brewsage"
-                             , status   = "Ready"
-                             , formulas = makeNonEmptyCursor ne
-                             , selected = Nothing
-                             }
 
 tuiApp :: App TuiState e FormulaName
 tuiApp = App { appDraw         = drawTui

@@ -8,7 +8,7 @@ import           Data.Either                    ( lefts
 import           Data.Time                      ( diffUTCTime
                                                 , getCurrentTime
                                                 )
-import           System.Environment
+import           System.Environment             ( getArgs )
 import           System.IO                      ( hFlush
                                                 , stdout
                                                 )

@@ -1,14 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Tui.Widgets where
 
-import           Brick.Types
 import qualified Brick.Widgets.Center          as C
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
-import           Brick.Widgets.Core
-import           Cursor.Simple.List.NonEmpty
-import           Data.Brew
 import qualified Data.ByteString.Lazy.Char8    as C8
+
+import           Brick.Types                    ( Widget )
+import           Brick.Widgets.Core             ( hLimit
+                                                , str
+                                                , vBox
+                                                , vLimit
+                                                , withAttr
+                                                , withBorderStyle
+                                                )
+import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorPrev
+                                                , nonEmptyCursorCurrent
+                                                , nonEmptyCursorNext
+                                                , NonEmptyCursor
+                                                )
+import           Data.Brew                      ( BrewFormula(..) )
 
 title :: String -> Widget n
 title t =
