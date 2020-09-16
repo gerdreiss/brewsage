@@ -39,7 +39,8 @@ tui fs = do
 buildInitialState :: [BrewFormula] -> IO TuiState
 buildInitialState formulas = do
   let fs = NE.nonEmpty formulas
-      df = NE.nonEmpty [BrewFormula { name = "", dependencies = [], dependants = [] }]
+      df = NE.nonEmpty
+        [BrewFormula { name = "", dependencies = [], dependants = [] }]
   case fs of
     Nothing -> pure TuiState { title    = "Brewsage"
                              , status   = "No formulas found"
@@ -66,10 +67,15 @@ drawTui s =
       st  = status s
       fs  = formulas s
       sel = selected s
-  in  [ withBorderStyle BS.unicodeRounded $ vBox
-          [ B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox [str t]
+  in  [ withBorderStyle BS.unicodeBold $ vBox
+          [ withBorderStyle BS.unicodeBold
+          $ B.border
+          $ vLimit 1
+          $ C.vCenter
+          $ C.hCenter
+          $ vBox [str t]
           , hBox
-            [ withBorderStyle BS.unicodeRounded
+            [ withBorderStyle BS.unicodeBold
             $ B.border
             $ hLimit 20
             $ C.vCenter
@@ -80,15 +86,24 @@ drawTui s =
                 , [drawFormula True $ nonEmptyCursorCurrent fs]
                 , map (drawFormula False) $ nonEmptyCursorNext fs
                 ]
-            , withBorderStyle BS.unicodeRounded $ B.border $ C.vCenter $ C.hCenter $ vBox
-              [str " selected formula "]
+            , withBorderStyle BS.unicodeBold
+            $ B.border
+            $ C.vCenter
+            $ C.hCenter
+            $ vBox [str $ maybe " selected formula " show sel]
             ]
-          , B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox [str st]
+          , withBorderStyle BS.unicodeBold
+          $ B.border
+          $ vLimit 1
+          $ C.vCenter
+          $ C.hCenter
+          $ vBox [str st]
           ]
       ]
 
 drawFormula :: Bool -> BrewFormula -> Widget n
-drawFormula b = (if b then withAttr "selected" else id) . str . C8.unpack . name
+drawFormula b =
+  (if b then withAttr "selected" else id) . str . C8.unpack . name
 
 handleTuiEvent :: TuiState -> BrickEvent n e -> EventM n (Next TuiState)
 handleTuiEvent s e = case e of
