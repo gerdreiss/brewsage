@@ -25,6 +25,9 @@ instance Show BrewFormula where
       formulas -> " is used by " ++ formulaNames formulas
     formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
 
+instance Eq BrewFormula  where
+  (==) f1 f2 = name f1 == name f2
+
 data BrewError = BrewError
   { code :: Int,
     message :: B.ByteString
