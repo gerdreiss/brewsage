@@ -15,13 +15,12 @@ import           System.IO                      ( hFlush
 import           Tui.Main                       ( tui )
 
 main :: IO ()
-main = tui
--- main = do
---   putStr "Reading formula information... "
---   hFlush stdout
---   start    <- getCurrentTime
---   formulas <- listFormulasWithDependants
---   stop     <- getCurrentTime
---   putStrLn $ "Done. Time: " ++ show (diffUTCTime stop start)
---   procFormulas . rights $ formulas
---   putStrLn . concatMap show . lefts $ formulas
+main = do
+  putStr "Reading formula information... "
+  hFlush stdout
+  start    <- getCurrentTime
+  formulas <- listFormulasWithDependants
+  stop     <- getCurrentTime
+  putStrLn $ "Done. Time: " ++ show (diffUTCTime stop start)
+  tui . rights $ formulas
+  putStrLn . concatMap show . lefts $ formulas

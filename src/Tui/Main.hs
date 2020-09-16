@@ -30,15 +30,15 @@ data TuiState = TuiState
 data FormulaName = FormulaName
   deriving (Eq, Show, Ord)
 
-tui :: IO ()
-tui = do
-  initialState <- buildInitialState
+tui :: [BrewFormula] -> IO ()
+tui fs = do
+  initialState <- buildInitialState fs
   endState     <- defaultMain tuiApp initialState
-  print endState
+  print $ fmap (C8.unpack . name) (formulas endState)
 
-buildInitialState :: IO TuiState
-buildInitialState = do
-  let fs = NE.nonEmpty [BrewFormula { name = "the-formula", dependencies = [], dependants = [] }]
+buildInitialState :: [BrewFormula] -> IO TuiState
+buildInitialState formulas = do
+  let fs = NE.nonEmpty formulas
       df = NE.nonEmpty [BrewFormula { name = "", dependencies = [], dependants = [] }]
   case fs of
     Nothing -> pure TuiState { title    = "Brewsage"
@@ -66,11 +66,11 @@ drawTui s =
       st  = status s
       fs  = formulas s
       sel = selected s
-  in  [ withBorderStyle BS.unicodeRounded $ C.vCenter $ C.hCenter $ vBox
+  in  [ withBorderStyle BS.unicodeRounded $ vBox
           [ B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox [str t]
           , hBox
             [ withBorderStyle BS.unicodeRounded
-            $ B.borderWithLabel (str " Formulas ")
+            $ B.border
             $ hLimit 20
             $ C.vCenter
             $ C.hCenter
@@ -80,11 +80,8 @@ drawTui s =
                 , [drawFormula True $ nonEmptyCursorCurrent fs]
                 , map (drawFormula False) $ nonEmptyCursorNext fs
                 ]
-            , withBorderStyle BS.unicodeRounded
-            $ B.borderWithLabel (str " Selected Formula ")
-            $ C.vCenter
-            $ C.hCenter
-            $ vBox [str " selected formula "]
+            , withBorderStyle BS.unicodeRounded $ B.border $ C.vCenter $ C.hCenter $ vBox
+              [str " selected formula "]
             ]
           , B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox [str st]
           ]
