@@ -17,9 +17,9 @@ import           Brick.Types                    ( ViewportType(Vertical)
                                                 , Padding(Max)
                                                 , Widget
                                                 )
-import           Brick.Widgets.Core             ( viewport
+import           Brick.Widgets.Core             ( padTopBottom
+                                                , viewport
                                                 , padRight
-                                                , padBottom
                                                 , hLimit
                                                 , str
                                                 , vBox
@@ -46,17 +46,24 @@ title t =
     . vBox
     $ [str t]
 
-formulas :: NonEmptyCursor BrewFormula -> Widget UIFormulas
-formulas fs =
+formulas :: Int -> NonEmptyCursor BrewFormula -> Widget UIFormulas
+formulas nfs fs =
   withBorderStyle BS.unicodeBold
     . B.border
     . hLimit 30
     . vBox
-    . concat
-    $ [ drawFormula False <$> (reverse . nonEmptyCursorPrev $ fs)
-      , drawFormula True <$> [nonEmptyCursorCurrent fs]
-      , drawFormula False <$> nonEmptyCursorNext fs
-      , padBottom Max <$> [str "_"]
+    $ [ viewport UIFormulas Vertical
+        . vBox
+        $ [ padTopBottom 1
+            . hLimit 30
+            . vLimit nfs
+            . vBox
+            . concat
+            $ [ drawFormula False <$> (reverse . nonEmptyCursorPrev $ fs)
+              , drawFormula True <$> [nonEmptyCursorCurrent fs]
+              , drawFormula False <$> nonEmptyCursorNext fs
+              ]
+          ]
       ]
 
 drawFormula :: IsSelected -> BrewFormula -> Widget UIFormulas

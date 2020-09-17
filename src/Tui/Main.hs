@@ -7,7 +7,10 @@ import qualified Tui.Widgets                   as W
 
 import           Data.Brew                      ( BrewFormula )
 import           Brick.AttrMap                  ( attrMap )
-import           Brick.Main                     ( continue
+import           Brick.Main                     ( ViewportScroll
+                                                , viewportScroll
+                                                , vScrollBy
+                                                , continue
                                                 , defaultMain
                                                 , halt
                                                 , showFirstCursor
@@ -49,11 +52,15 @@ drawTui :: TuiState -> [Widget UIFormulas]
 drawTui s =
   let t   = stateTitle s
       fs  = stateFormulas s
+      nfs = stateNumberFormulas s
       sel = stateSelected s
       st  = stateStatus s
-  in  [vBox [W.title t, hBox [W.formulas fs, W.selected sel], W.status st]]
+  in  [vBox [W.title t, hBox [W.formulas nfs fs, W.selected sel], W.status st]]
 
-handleTuiEvent :: TuiState -> BrickEvent n e -> EventM n (Next TuiState)
+uiFormulaScroll :: ViewportScroll UIFormulas
+uiFormulaScroll = viewportScroll UIFormulas
+
+handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
 handleTuiEvent s e = case e of
   VtyEvent vtye -> case vtye of
     EvKey (KChar 'q') [] -> halt s
@@ -61,12 +68,16 @@ handleTuiEvent s e = case e of
       let nec = stateFormulas s
       case nonEmptyCursorSelectNext nec of
         Nothing   -> continue s
-        Just nec' -> continue $ s { stateFormulas = nec' }
+        Just nec' -> do
+          vScrollBy uiFormulaScroll 1
+          continue $ s { stateFormulas = nec' }
     EvKey KUp         [] -> do
       let nec = stateFormulas s
       case nonEmptyCursorSelectPrev nec of
         Nothing   -> continue s
-        Just nec' -> continue $ s { stateFormulas = nec' }
+        Just nec' -> do
+          vScrollBy uiFormulaScroll (-1)
+          continue $ s { stateFormulas = nec' }
     EvKey KEnter      [] -> do
       let sel = nonEmptyCursorCurrent $ stateFormulas s
       continue s { stateSelected = Just sel }
