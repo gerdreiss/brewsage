@@ -29,8 +29,13 @@ type IsSelected = Bool
 
 title :: String -> Widget n
 title t =
-  withBorderStyle BS.unicodeBold $ B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox
-    [str t]
+  withBorderStyle BS.unicodeBold
+    . B.border
+    . vLimit 1
+    . C.vCenter
+    . C.hCenter
+    . vBox
+    $ [str t]
 
 formulas :: NonEmptyCursor BrewFormula -> Widget n
 formulas fs =
@@ -60,5 +65,10 @@ selected sel =
 
 status :: String -> Widget n
 status st =
-  withBorderStyle BS.unicodeBold $ B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox
-    [str st]
+  withBorderStyle BS.unicodeBold
+    . B.border
+    . vLimit 1
+    . C.vCenter
+    . C.hCenter
+    . vBox
+    $ [str st]
