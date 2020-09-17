@@ -16,13 +16,14 @@ import           Tui.Main                       ( tui )
 
 main :: IO ()
 main = do
-  args <- getArgs
   putStr "Reading formula information... "
   hFlush stdout
   start    <- getCurrentTime
   formulas <- listFormulasWithDependants
   stop     <- getCurrentTime
-  putStrLn $ "Done. Time: " ++ show (diffUTCTime stop start)
+  putStrLn "Done."
+  putStrLn ("Time elapsed: " ++ show (diffUTCTime stop start))
+  args <- getArgs
   case args of
     ("--tui" : _) -> tui . rights $ formulas
     _             -> procFormulas . rights $ formulas

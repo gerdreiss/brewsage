@@ -7,18 +7,21 @@ import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
 import qualified Data.ByteString.Lazy.Char8    as C8
 
-import           Brick.Types                    ( Widget )
-import           Brick.Widgets.Core             ( hLimit
+import           Brick.Types                    ( Padding(Max)
+                                                , Widget
+                                                )
+import           Brick.Widgets.Core             ( padRight
+                                                , padBottom
+                                                , hLimit
                                                 , str
                                                 , vBox
                                                 , vLimit
-                                                , withAttr
                                                 , withBorderStyle
                                                 )
-import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorPrev
+import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorCurrent
                                                 , nonEmptyCursorNext
-                                                , NonEmptyCursor
+                                                , nonEmptyCursorPrev
                                                 )
 import           Data.Brew                      ( BrewFormula(..) )
 
@@ -30,19 +33,18 @@ title t =
 formulas :: NonEmptyCursor BrewFormula -> Widget n
 formulas fs =
   withBorderStyle BS.unicodeBold
-    $ B.border
-    $ hLimit 20
-    $ C.vCenter
-    $ C.hCenter
-    $ vBox
-    $ concat
-        [ map (drawFormula False) . reverse . nonEmptyCursorPrev $ fs
-        , [drawFormula True $ nonEmptyCursorCurrent fs]
-        , map (drawFormula False) $ nonEmptyCursorNext fs
-        ]
+    . B.border
+    . hLimit 30
+    . vBox
+    . concat
+    $ [ map (drawFormula False) . reverse . nonEmptyCursorPrev $ fs
+      , [drawFormula True $ nonEmptyCursorCurrent fs]
+      , map (drawFormula False) $ nonEmptyCursorNext fs
+      , [padBottom Max $ str "_"]
+      ]
 
 drawFormula :: Bool -> BrewFormula -> Widget n
-drawFormula b = (if b then withAttr "selected" else id) . str . C8.unpack . name
+drawFormula b = padRight Max . str . ((if b then " * " else "   ") ++) . C8.unpack . name
 
 selected :: Maybe BrewFormula -> Widget n
 selected sel = withBorderStyle BS.unicodeBold $ B.border $ C.vCenter $ C.hCenter $ vBox

@@ -15,14 +15,14 @@ data BrewFormula = BrewFormula
 
 instance Show BrewFormula where
   show formula = concat
-    ["\n", C8.unpack . name $ formula, "\n", dependencyList, "\n", dependantList, "\n"]
+    ["\n", C8.unpack . name $ formula, "\n", dependantList, "\n", dependencyList, "\n"]
    where
     dependencyList = case dependencies formula of
-      []       -> " has no dependencies"
-      formulas -> " depends on " ++ formulaNames formulas
+      []       -> "  has no dependencies"
+      formulas -> "  depends on " ++ formulaNames formulas
     dependantList  = case dependants formula of
-      []       -> " is not used by any other formula"
-      formulas -> " is used by " ++ formulaNames formulas
+      []       -> "  is not used by any other formula"
+      formulas -> "  is used by " ++ formulaNames formulas
     formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
 
 instance Eq BrewFormula  where

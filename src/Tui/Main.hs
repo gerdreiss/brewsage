@@ -6,9 +6,9 @@ module Tui.Main
 where
 
 import qualified Brick.Widgets.Border.Style    as BS
-import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Tui.Widgets                   as W
 
+import           Data.Brew                      ( BrewFormula )
 import           Brick.AttrMap                  ( attrMap )
 import           Brick.Main                     ( continue
                                                 , defaultMain
@@ -21,7 +21,6 @@ import           Brick.Types                    ( Widget
                                                 , EventM
                                                 , Next
                                                 )
-import           Brick.Util                     ( fg )
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 , withBorderStyle
@@ -30,8 +29,6 @@ import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
                                                 , nonEmptyCursorCurrent
                                                 )
-import           Data.Brew                      ( BrewFormula(name) )
-import           Graphics.Vty.Attributes        ( red )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
                                                 , Key(KEnter, KChar, KDown, KUp)
                                                 )
@@ -44,17 +41,14 @@ data FormulaName = FormulaName
   deriving (Eq, Show, Ord)
 
 tui :: [BrewFormula] -> IO ()
-tui fs = do
-  initialState <- buildInitialState fs
-  endState     <- defaultMain tuiApp initialState
-  print $ fmap (C8.unpack . name) (formulas endState)
+tui fs = buildInitialState fs >>= defaultMain tuiApp >> return ()
 
 tuiApp :: App TuiState e FormulaName
 tuiApp = App { appDraw         = drawTui
              , appChooseCursor = showFirstCursor
              , appHandleEvent  = handleTuiEvent
              , appStartEvent   = pure
-             , appAttrMap      = const $ attrMap mempty [("selected", fg red)]
+             , appAttrMap      = const $ attrMap mempty mempty
              }
 
 drawTui :: TuiState -> [Widget FormulaName]
