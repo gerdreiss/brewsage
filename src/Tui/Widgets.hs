@@ -25,6 +25,8 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 )
 import           Data.Brew                      ( BrewFormula(..) )
 
+type IsSelected = Bool
+
 title :: String -> Widget n
 title t =
   withBorderStyle BS.unicodeBold $ B.border $ vLimit 1 $ C.vCenter $ C.hCenter $ vBox
@@ -43,12 +45,18 @@ formulas fs =
       , [padBottom Max $ str "_"]
       ]
 
-drawFormula :: Bool -> BrewFormula -> Widget n
-drawFormula b = padRight Max . str . ((if b then " * " else "   ") ++) . C8.unpack . name
+drawFormula :: IsSelected -> BrewFormula -> Widget n
+drawFormula isSelected = padRight Max . str . prefix . C8.unpack . name
+  where prefix = ((if isSelected then " * " else "   ") ++)
 
 selected :: Maybe BrewFormula -> Widget n
-selected sel = withBorderStyle BS.unicodeBold $ B.border $ C.vCenter $ C.hCenter $ vBox
-  [str $ maybe " selected formula " show sel]
+selected sel =
+  withBorderStyle BS.unicodeBold
+    . B.border
+    . C.vCenter
+    . C.hCenter
+    . vBox
+    $ [str $ maybe " selected formula " show sel]
 
 status :: String -> Widget n
 status st =
