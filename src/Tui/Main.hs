@@ -24,7 +24,8 @@ import           Brick.Types                    ( Widget
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
-import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorSelectNext
+import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
+                                                , nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
                                                 , nonEmptyCursorCurrent
                                                 )
@@ -36,6 +37,9 @@ import           Tui.State                      ( TuiState(..)
                                                 )
 import           Tui.Types                      ( UIFormulas(..) )
 
+
+type ScrollDir = Int
+type ScrollF = NonEmptyCursor BrewFormula -> Maybe (NonEmptyCursor BrewFormula)
 
 tui :: [BrewFormula] -> IO ()
 tui fs = buildInitialState fs >>= defaultMain tuiApp >> return ()
@@ -57,29 +61,32 @@ drawTui s =
       st  = stateStatus s
   in  [vBox [W.title t, hBox [W.formulas nfs fs, W.selected sel], W.status st]]
 
+handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
+handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
+handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
+handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
+handleTuiEvent s (VtyEvent (EvKey KEnter _)) = select s
+handleTuiEvent s _ = continue s
+
+scroll
+  :: ScrollDir                          -- scroll direction: 1 = down, -1 = up
+  -> ScrollF                            -- function to select the next/previous formula
+  -> TuiState                           -- the state
+  -> EventM UIFormulas (Next TuiState)
+scroll d f s = case f (stateFormulas s) of
+  Nothing       -> continue s
+  Just formulas -> do
+    vScrollBy uiFormulaScroll d
+    continue $ s { stateFormulas = formulas }
+
+down :: Int
+down = 1
+
+up :: Int
+up = -1
+
 uiFormulaScroll :: ViewportScroll UIFormulas
 uiFormulaScroll = viewportScroll UIFormulas
 
-handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
-handleTuiEvent s e = case e of
-  VtyEvent vtye -> case vtye of
-    EvKey (KChar 'q') [] -> halt s
-    EvKey KDown       [] -> do
-      let nec = stateFormulas s
-      case nonEmptyCursorSelectNext nec of
-        Nothing   -> continue s
-        Just nec' -> do
-          vScrollBy uiFormulaScroll 1
-          continue $ s { stateFormulas = nec' }
-    EvKey KUp         [] -> do
-      let nec = stateFormulas s
-      case nonEmptyCursorSelectPrev nec of
-        Nothing   -> continue s
-        Just nec' -> do
-          vScrollBy uiFormulaScroll (-1)
-          continue $ s { stateFormulas = nec' }
-    EvKey KEnter      [] -> do
-      let sel = nonEmptyCursorCurrent $ stateFormulas s
-      continue s { stateSelected = Just sel }
-    _                    -> continue s
-  _             -> continue s
+select :: TuiState -> EventM UIFormulas (Next TuiState)
+select s = continue s { stateSelected = Just (nonEmptyCursorCurrent $ stateFormulas s) }
