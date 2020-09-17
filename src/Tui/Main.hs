@@ -6,10 +6,11 @@ module Tui.Main
 where
 
 import qualified Tui.Widgets                   as W
+import qualified Data.List.NonEmpty            as NE
 
+import           Control.Brew.Commands          ( listFormulas )
 import           Control.Brew.Usage             ( readFormulaUsage )
 import           Control.Monad.IO.Class         ( liftIO )
-import           Data.Brew                      ( BrewFormula )
 import           Brick.AttrMap                  ( attrMap )
 import           Brick.Main                     ( ViewportScroll
                                                 , viewportScroll
@@ -32,6 +33,10 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
                                                 , nonEmptyCursorCurrent
+                                                , makeNonEmptyCursor
+                                                )
+import           Data.Brew                      ( BrewFormula
+                                                , emptyFormula
                                                 )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
                                                 , Key(KEnter, KChar, KDown, KUp)
@@ -52,8 +57,8 @@ tui fs = buildInitialState fs >>= defaultMain tuiApp >>= printExitStatus
 tuiApp :: App TuiState e UIFormulas
 tuiApp = App { appDraw         = drawTui
              , appChooseCursor = showFirstCursor
+             , appStartEvent   = pure --startTuiEvent
              , appHandleEvent  = handleTuiEvent
-             , appStartEvent   = pure
              , appAttrMap      = const $ attrMap mempty mempty
              }
 
@@ -65,6 +70,16 @@ drawTui s =
       sel = stateSelected s
       st  = stateStatus s
   in  [vBox [W.title t, hBox [W.formulas nfs fs, W.selected sel], W.status st]]
+
+startTuiEvent :: TuiState -> EventM UIFormulas TuiState
+startTuiEvent s = do
+  formulas <- liftIO listFormulas
+  case formulas of
+    Left err -> return s { stateError = Just err }
+    Right [] ->
+      return s { stateFormulas = makeNonEmptyCursor $ NE.fromList [emptyFormula] }
+    Right fs -> return s { stateFormulas = makeNonEmptyCursor $ NE.fromList fs }
+
 
 handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
 handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s

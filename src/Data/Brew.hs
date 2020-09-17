@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Data.Brew where
 
 import qualified Data.ByteString.Lazy          as B
@@ -71,3 +73,7 @@ instance Read Answer where
     "n"    -> [(No, [])]
     ""     -> [(No, [])]
     _      -> [(Que, [])]
+
+emptyFormula :: BrewFormula
+emptyFormula =
+  BrewFormula { formulaName = "", formulaDependencies = [], formulaDependants = [] }
