@@ -65,19 +65,22 @@ handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState
 handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
-handleTuiEvent s (VtyEvent (EvKey KEnter _)) = select s
+handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
 handleTuiEvent s _ = continue s
 
 scroll
   :: ScrollDir                          -- scroll direction: 1 = down, -1 = up
   -> ScrollF                            -- function to select the next/previous formula
-  -> TuiState                           -- the state
+  -> TuiState                           -- the TUI state
   -> EventM UIFormulas (Next TuiState)
-scroll d f s = case f (stateFormulas s) of
+scroll direction scrollF s = case scrollF . stateFormulas $ s of
   Nothing       -> continue s
   Just formulas -> do
-    vScrollBy uiFormulaScroll d
+    vScrollBy uiFormulaScroll direction
     continue $ s { stateFormulas = formulas }
+
+uiFormulaScroll :: ViewportScroll UIFormulas
+uiFormulaScroll = viewportScroll UIFormulas
 
 down :: Int
 down = 1
@@ -85,8 +88,6 @@ down = 1
 up :: Int
 up = -1
 
-uiFormulaScroll :: ViewportScroll UIFormulas
-uiFormulaScroll = viewportScroll UIFormulas
-
-select :: TuiState -> EventM UIFormulas (Next TuiState)
-select s = continue s { stateSelected = Just (nonEmptyCursorCurrent $ stateFormulas s) }
+displayFormula :: TuiState -> EventM UIFormulas (Next TuiState)
+displayFormula s =
+  continue s { stateSelected = Just . nonEmptyCursorCurrent . stateFormulas $ s }
