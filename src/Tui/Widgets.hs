@@ -107,11 +107,12 @@ help =
     . C.vCenter
     . C.hCenter
     . hBox
-    $ [ vBox
-          [ str "ENTER - Show selected"
-          , str "x     - Delete selected"
-          , str "i     - Install new"
-          , str "q     - Exit"
+    $ [ padRight Max
+        . vBox
+        $ [ str "   ENTER : Show selected"
+          , str "   x     : Delete selected"
+          , str "   i     : Install new"
+          , str "   q     : Exit"
           ]
       ]
 
