@@ -77,7 +77,11 @@ selected sel =
     . C.vCenter
     . C.hCenter
     . vBox
-    $ [str $ maybe " selected formula " show sel]
+    $ [ str $ maybe
+          "select a formula by pushing ENTER to display it here with its dependants and dependencies"
+          show
+          sel
+      ]
 
 status :: String -> Widget UIFormulas
 status st =
