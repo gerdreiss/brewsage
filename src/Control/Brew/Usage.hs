@@ -1,37 +1,43 @@
 module Control.Brew.Usage
-  ( listFormulasWithDependants
+  ( listFormulas
+  , listFormulasWithDependants
+  , readFormulaUsage
   )
 where
 
-import           Control.Brew.Commands          ( listFormulas
-                                                , listDependants
-                                                , listDependencies
-                                                )
+import qualified Control.Brew.Commands         as C
+
 import           Control.Concurrent.ParallelIO  ( parallel )
 import           Data.Brew                      ( ErrorOrFormulas
-                                                , BrewError
                                                 , BrewFormula(..)
                                                 , ErrorOrFormula
                                                 )
 
 --
 --
+-- list all formulas
+listFormulas :: IO [ErrorOrFormula]
+listFormulas = C.listFormulas >>= procErrorOrFormulas False
+
+--
+--
 -- list all formulas with respective usages
 listFormulasWithDependants :: IO [ErrorOrFormula]
-listFormulasWithDependants = listFormulas >>= procErrorOrFormulas
+listFormulasWithDependants = C.listFormulas >>= procErrorOrFormulas True
 
 -- process error or retrieve usage for the given formulas
-procErrorOrFormulas :: Either BrewError [BrewFormula] -> IO [ErrorOrFormula]
-procErrorOrFormulas (Right formulas) = parallel $ map readFormulaUsage formulas
-procErrorOrFormulas (Left  err     ) = return [Left err]
+procErrorOrFormulas :: Bool -> ErrorOrFormulas -> IO [ErrorOrFormula]
+procErrorOrFormulas b (Right formulas) =
+  if b then parallel $ map readFormulaUsage formulas else return $ map Right formulas
+procErrorOrFormulas _ (Left err) = return [Left err]
 
 --
 --
 -- get dependants of and assign them to the given formula
 readFormulaUsage :: BrewFormula -> IO ErrorOrFormula
 readFormulaUsage formula = do
-  usage <- listDependants formula
-  deps  <- listDependencies formula
+  usage <- C.listDependants formula
+  deps  <- C.listDependencies formula
   return $ procErrorOrFormulaUsage formula usage deps
 
 -- process error or assign retrieved dependent formulas to the given formula

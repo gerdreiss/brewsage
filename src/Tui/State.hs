@@ -4,7 +4,9 @@ module Tui.State where
 
 import qualified Data.List.NonEmpty            as NE
 
-import           Data.Brew                      ( BrewFormula(..) )
+import           Data.Brew                      ( BrewError
+                                                , BrewFormula(..)
+                                                )
 import           Cursor.Simple.List.NonEmpty    ( makeNonEmptyCursor
                                                 , NonEmptyCursor
                                                 )
@@ -16,6 +18,7 @@ data TuiState = TuiState
   , stateNumberFormulas :: Int
   , stateSelected :: Maybe BrewFormula
   , stateStatus :: String
+  , stateError :: Maybe BrewError
   }
   deriving (Show, Eq)
 
@@ -29,7 +32,9 @@ buildInitialState fs = do
       , stateFormulas       = makeNonEmptyCursor ne
       , stateNumberFormulas = length ne
       , stateSelected       = Nothing
-      , stateStatus = "Ready | q - Exit | ENTER - Show selected | x - Delete selected"
+      , stateStatus         =
+        "Ready | q - Exit | ENTER - Show selected | x - Delete selected | i - Install new"
+      , stateError          = Nothing
       }
 
 emptyState :: TuiState
@@ -44,5 +49,6 @@ emptyState = TuiState
                             ]
   , stateNumberFormulas = 0
   , stateSelected       = Nothing
-  , stateStatus         = "No formulas found | q - Exit"
+  , stateStatus         = "No formulas found | q - Exit | i - Install new"
+  , stateError          = Nothing
   }

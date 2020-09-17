@@ -28,7 +28,7 @@ instance Show BrewFormula where
     ]
    where
     dependencyList = case formulaDependencies formula of
-      []       -> "  has no formulaDependencies"
+      []       -> "  has no dependencies"
       formulas -> "  depends on " ++ formulaNames formulas
     dependantList  = case formulaDependants formula of
       []       -> "  is not used by any other formula"
@@ -39,13 +39,20 @@ instance Eq BrewFormula  where
   (==) f1 f2 = formulaName f1 == formulaName f2
 
 data BrewError = BrewError
-  { code :: Int,
-    message :: B.ByteString
+  { errorCode :: Int,
+    errorMessage :: B.ByteString
   }
 
 instance Show BrewError where
-  show err =
-    concat ["Error occurred: code ", show . code $ err, " message ", show . message $ err]
+  show err = concat
+    [ "Error occurred: code "
+    , show . errorCode $ err
+    , " message "
+    , show . errorMessage $ err
+    ]
+
+instance Eq BrewError where
+  (==) e1 e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
 
 data Answer
   = Yes

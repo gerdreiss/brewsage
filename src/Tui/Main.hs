@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Tui.Main
   ( tui
   )
@@ -5,6 +7,8 @@ where
 
 import qualified Tui.Widgets                   as W
 
+import           Control.Brew.Usage             ( readFormulaUsage )
+import           Control.Monad.IO.Class         ( liftIO )
 import           Data.Brew                      ( BrewFormula )
 import           Brick.AttrMap                  ( attrMap )
 import           Brick.Main                     ( ViewportScroll
@@ -42,7 +46,8 @@ type ScrollDir = Int
 type ScrollF = NonEmptyCursor BrewFormula -> Maybe (NonEmptyCursor BrewFormula)
 
 tui :: [BrewFormula] -> IO ()
-tui fs = buildInitialState fs >>= defaultMain tuiApp >> return ()
+tui fs = buildInitialState fs >>= defaultMain tuiApp >>= printExitStatus
+  where printExitStatus = print . maybe "Exited with success" show . stateError
 
 tuiApp :: App TuiState e UIFormulas
 tuiApp = App { appDraw         = drawTui
@@ -89,5 +94,8 @@ up :: Int
 up = -1
 
 displayFormula :: TuiState -> EventM UIFormulas (Next TuiState)
-displayFormula s =
-  continue s { stateSelected = Just . nonEmptyCursorCurrent . stateFormulas $ s }
+displayFormula s = do
+  selected <- liftIO . readFormulaUsage . nonEmptyCursorCurrent . stateFormulas $ s
+  case selected of
+    Left  err     -> halt s { stateError = Just err }
+    Right formula -> continue s { stateSelected = Just formula }
