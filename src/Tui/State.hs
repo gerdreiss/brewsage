@@ -28,21 +28,19 @@ buildInitialState fs = do
   let maybeFormulas = NE.nonEmpty fs
   case maybeFormulas of
     Nothing -> pure emptyState
-    Just ne -> pure TuiState
-      { stateTitle          = "Brewsage"
-      , stateFormulas       = makeNonEmptyCursor ne
-      , stateNumberFormulas = length ne
-      , stateSelected       = Nothing
-      , stateStatus         =
-        "Ready | q - Exit | ENTER - Show selected | x - Delete selected | i - Install new"
-      , stateError          = Nothing
-      }
+    Just ne -> pure TuiState { stateTitle          = "Brewsage"
+                             , stateFormulas       = makeNonEmptyCursor ne
+                             , stateNumberFormulas = length ne
+                             , stateSelected       = Nothing
+                             , stateStatus         = "Ready"
+                             , stateError          = Nothing
+                             }
 
 emptyState :: TuiState
-emptyState = TuiState { stateTitle = "Brewsage"
+emptyState = TuiState { stateTitle          = "Brewsage"
                       , stateFormulas = makeNonEmptyCursor $ NE.fromList [emptyFormula]
                       , stateNumberFormulas = 0
-                      , stateSelected = Nothing
-                      , stateStatus = "No formulas found | q - Exit | i - Install new"
-                      , stateError = Nothing
+                      , stateSelected       = Nothing
+                      , stateStatus         = "No installed formulas found"
+                      , stateError          = Nothing
                       }

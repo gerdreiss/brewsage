@@ -5,6 +5,7 @@ module Tui.Widgets
   , formulas
   , selected
   , status
+  , help
   )
 where
 
@@ -13,18 +14,22 @@ import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
 import qualified Data.ByteString.Lazy.Char8    as C8
 
+import           Brick                          ( Padding(Pad) )
 import           Brick.Types                    ( ViewportType(Vertical)
                                                 , Padding(Max)
                                                 , Widget
                                                 )
-import           Brick.Widgets.Core             ( padTopBottom
-                                                , viewport
-                                                , padRight
+import           Brick.Widgets.Core             ( hBox
                                                 , hLimit
+                                                , padBottom
+                                                , padLeft
+                                                , padRight
+                                                , padTopBottom
                                                 , str
                                                 , vBox
-                                                , vLimit
+                                                , viewport
                                                 , withBorderStyle
+                                                , vLimit
                                                 )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorCurrent
@@ -50,12 +55,12 @@ formulas :: Int -> NonEmptyCursor BrewFormula -> Widget UIFormulas
 formulas nfs fs =
   withBorderStyle BS.unicodeBold
     . B.border
-    . hLimit 30
+    . hLimit leftWidth
     . vBox
     $ [ viewport UIFormulas Vertical
         . vBox
         $ [ padTopBottom 1
-            . hLimit 30
+            . hLimit leftWidth
             . vLimit nfs
             . vBox
             . concat
@@ -87,8 +92,31 @@ status :: String -> Widget UIFormulas
 status st =
   withBorderStyle BS.unicodeBold
     . B.border
-    . vLimit 1
+    . vLimit bottomHeight
     . C.vCenter
     . C.hCenter
-    . vBox
-    $ [str st]
+    . hBox
+    $ [vBox [padLeft (Pad 3) . padRight Max . padBottom Max $ str st]]
+
+help :: Widget UIFormulas
+help =
+  withBorderStyle BS.unicodeBold
+    . B.border
+    . hLimit leftWidth
+    . vLimit bottomHeight
+    . C.vCenter
+    . C.hCenter
+    . hBox
+    $ [ vBox
+          [ str "ENTER - Show selected"
+          , str "x     - Delete selected"
+          , str "i     - Install new"
+          , str "q     - Exit"
+          ]
+      ]
+
+leftWidth :: Int
+leftWidth = 30
+
+bottomHeight :: Int
+bottomHeight = 4

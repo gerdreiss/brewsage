@@ -64,12 +64,16 @@ tuiApp = App { appDraw         = drawTui
 
 drawTui :: TuiState -> [Widget UIFormulas]
 drawTui s =
-  let t   = stateTitle s
-      fs  = stateFormulas s
-      nfs = stateNumberFormulas s
-      sel = stateSelected s
-      st  = stateStatus s
-  in  [vBox [W.title t, hBox [W.formulas nfs fs, W.selected sel], W.status st]]
+  let
+    t   = stateTitle s
+    fs  = stateFormulas s
+    nfs = stateNumberFormulas s
+    sel = stateSelected s
+    st  = stateStatus s
+  in
+    [ vBox
+        [W.title t, hBox [W.formulas nfs fs, W.selected sel], hBox [W.help, W.status st]]
+    ]
 
 startTuiEvent :: TuiState -> EventM UIFormulas TuiState
 startTuiEvent s = do
