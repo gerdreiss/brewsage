@@ -11,10 +11,11 @@ import           Cursor.Simple.List.NonEmpty    ( makeNonEmptyCursor
 
 
 data TuiState = TuiState
-  { title :: String
-  , status :: String
-  , formulas :: NonEmptyCursor BrewFormula
-  , selected :: Maybe BrewFormula
+  { stateTitle :: String
+  , stateFormulas :: NonEmptyCursor BrewFormula
+  , stateNumberFormulas :: Int
+  , stateSelected :: Maybe BrewFormula
+  , stateStatus :: String
   }
   deriving (Show, Eq)
 
@@ -24,18 +25,24 @@ buildInitialState fs = do
   case maybeFormulas of
     Nothing -> pure emptyState
     Just ne -> pure TuiState
-      { title    = "Brewsage"
-      , status   = "Ready | q - Exit | ENTER - Show selected | x - Delete selected"
-      , formulas = makeNonEmptyCursor ne
-      , selected = Nothing
+      { stateTitle          = "Brewsage"
+      , stateFormulas       = makeNonEmptyCursor ne
+      , stateNumberFormulas = length ne
+      , stateSelected       = Nothing
+      , stateStatus = "Ready | q - Exit | ENTER - Show selected | x - Delete selected"
       }
 
 emptyState :: TuiState
 emptyState = TuiState
-  { title    = "Brewsage"
-  , status   = "No formulas found | q - Exit"
-  , formulas = makeNonEmptyCursor
-               . NE.fromList
-               $ [BrewFormula { name = "", dependencies = [], dependants = [] }]
-  , selected = Nothing
+  { stateTitle          = "Brewsage"
+  , stateFormulas       = makeNonEmptyCursor
+                          . NE.fromList
+                          $ [ BrewFormula { formulaName         = ""
+                                          , formulaDependencies = []
+                                          , formulaDependants   = []
+                                          }
+                            ]
+  , stateNumberFormulas = 0
+  , stateSelected       = Nothing
+  , stateStatus         = "No formulas found | q - Exit"
   }

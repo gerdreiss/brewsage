@@ -29,7 +29,7 @@ procFormulas formulas = do
 --
 procFormula :: BrewFormula -> IO ()
 procFormula formula
-  | not . null . dependants $ formula = print formula
+  | not . null . formulaDependants $ formula = print formula
   | otherwise = do
     answer <- askDeleteFormula formula
     case answer of
@@ -48,7 +48,7 @@ askDeleteFormula formula = do
 -- delete the given formula
 deleteFormula :: BrewFormula -> IO ()
 deleteFormula formula = do
-  input <- readProcess $ proc "brew" ["uninstall", unpack . name $ formula]
+  input <- readProcess $ proc "brew" ["uninstall", unpack . formulaName $ formula]
   case input of
     (ExitSuccess  , out, _  ) -> print out
     (ExitFailure _, _  , err) -> print err

@@ -7,26 +7,36 @@ import           Data.Char                      ( isLetter
                                                 )
 import           Data.List                      ( intercalate )
 
+type ErrorOrFormulas = Either BrewError [BrewFormula]
+type ErrorOrFormula = Either BrewError BrewFormula
+
 data BrewFormula = BrewFormula
-  { name :: B.ByteString,
-    dependencies :: [BrewFormula],
-    dependants :: [BrewFormula]
+  { formulaName :: B.ByteString,
+    formulaDependencies :: [BrewFormula],
+    formulaDependants :: [BrewFormula]
   }
 
 instance Show BrewFormula where
   show formula = concat
-    ["\n", C8.unpack . name $ formula, "\n", dependantList, "\n", dependencyList, "\n"]
+    [ "\n"
+    , C8.unpack . formulaName $ formula
+    , "\n"
+    , dependantList
+    , "\n"
+    , dependencyList
+    , "\n"
+    ]
    where
-    dependencyList = case dependencies formula of
-      []       -> "  has no dependencies"
+    dependencyList = case formulaDependencies formula of
+      []       -> "  has no formulaDependencies"
       formulas -> "  depends on " ++ formulaNames formulas
-    dependantList  = case dependants formula of
+    dependantList  = case formulaDependants formula of
       []       -> "  is not used by any other formula"
       formulas -> "  is used by " ++ formulaNames formulas
-    formulaNames formulas = intercalate ", " (map (C8.unpack . name) formulas)
+    formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
 
 instance Eq BrewFormula  where
-  (==) f1 f2 = name f1 == name f2
+  (==) f1 f2 = formulaName f1 == formulaName f2
 
 data BrewError = BrewError
   { code :: Int,

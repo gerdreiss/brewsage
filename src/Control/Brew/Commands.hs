@@ -11,7 +11,8 @@ import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
 
 import           Data.Brew                      ( BrewError(BrewError)
-                                                , BrewFormula(BrewFormula, name)
+                                                , BrewFormula(BrewFormula, formulaName)
+                                                , ErrorOrFormulas
                                                 )
 import           System.Exit                    ( ExitCode(..) )
 import           System.Process.Typed           ( proc
@@ -23,19 +24,17 @@ import           Data.List.Safe                 ( safeHead
 
 type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 
-type ErrorOrFormulas = Either BrewError [BrewFormula]
-
 -- list installed homebrew formulas
 listFormulas :: IO ErrorOrFormulas
 listFormulas = processListResult <$> execBrewList
 
 -- list dependants of the given formula
 listDependants :: BrewFormula -> IO ErrorOrFormulas
-listDependants formula = processListResult <$> (execBrewUses . name $ formula)
+listDependants formula = processListResult <$> (execBrewUses . formulaName $ formula)
 
 -- list dependencies of the given formula
 listDependencies :: BrewFormula -> IO ErrorOrFormulas
-listDependencies formula = processInfoResult <$> (execBrewInfo . name $ formula)
+listDependencies formula = processInfoResult <$> (execBrewInfo . formulaName $ formula)
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
