@@ -7,11 +7,12 @@ module Control.Brew.Commands
   )
 where
 
+import qualified Data.ByteString.Lazy          as B
+import qualified Data.ByteString.Lazy.Char8    as C8
+
 import           Data.Brew                      ( BrewError(BrewError)
                                                 , BrewFormula(BrewFormula, name)
                                                 )
-import qualified Data.ByteString.Lazy          as B
-import qualified Data.ByteString.Lazy.Char8    as C8
 import           System.Exit                    ( ExitCode(..) )
 import           System.Process.Typed           ( proc
                                                 , readProcess
