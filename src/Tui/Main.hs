@@ -127,6 +127,6 @@ displayFormula s = do
   case selected of
     Left  err     -> halt s { stateStatus = "Error occured", stateError = Just err }
     Right formula -> continue s
-      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " selected"
+      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " displayed"
       , stateSelected = Just formula
       }

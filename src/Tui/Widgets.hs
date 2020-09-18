@@ -19,8 +19,7 @@ import           Brick.Types                    ( ViewportType(Vertical)
                                                 , Padding(Max)
                                                 , Widget
                                                 )
-import           Brick.Widgets.Core             ( (<+>)
-                                                , hBox
+import           Brick.Widgets.Core             ( hBox
                                                 , hLimit
                                                 , padBottom
                                                 , padLeft
@@ -102,30 +101,9 @@ displaySelected :: BrewFormula -> Widget UIFormulas
 displaySelected formula =
   vBox [displayInfo formula, displayDependencies formula, displayDependants formula]
 
-displayDependants :: BrewFormula -> Widget UIFormulas
-displayDependants formula =
-  B.borderWithLabel (B.vBorder <+> str " Usage " <+> B.vBorder)
-    . vLimit 3
-    . C.vCenter
-    . C.hCenter
-    . hBox
-    $ [ padLeft (Pad 3)
-        . padTop (Pad 1)
-        . padBottom Max
-        $ case formulaDependants formula of
-            [] -> strWrap "Not required by any other formula"
-            ds ->
-              strWrap
-                . ("Required by " ++)
-                . C8.unpack
-                . C8.intercalate (C8.pack ", ")
-                . map formulaName
-                $ ds
-      ]
-
 displayInfo :: BrewFormula -> Widget UIFormulas
 displayInfo formula =
-  B.borderWithLabel (B.vBorder <+> str " Formula " <+> B.vBorder)
+  B.border -- WithLabel (B.vBorder <+> str " Formula      " <+> B.vBorder)
     . C.vCenter
     . C.hCenter
     . hBox
@@ -140,7 +118,7 @@ displayInfo formula =
 
 displayDependencies :: BrewFormula -> Widget UIFormulas
 displayDependencies formula =
-  B.borderWithLabel (B.vBorder <+> str " Dependencies " <+> B.vBorder)
+  B.border -- WithLabel (B.vBorder <+> str " Dependencies " <+> B.vBorder)
     . vLimit 3
     . C.vCenter
     . C.hCenter
@@ -153,6 +131,27 @@ displayDependencies formula =
             ds ->
               strWrap
                 . ("Depends on " ++)
+                . C8.unpack
+                . C8.intercalate (C8.pack ", ")
+                . map formulaName
+                $ ds
+      ]
+
+displayDependants :: BrewFormula -> Widget UIFormulas
+displayDependants formula =
+  B.border -- WithLabel (B.vBorder <+> str " Usage        " <+> B.vBorder)
+    . vLimit 3
+    . C.vCenter
+    . C.hCenter
+    . hBox
+    $ [ padLeft (Pad 3)
+        . padTop (Pad 1)
+        . padBottom Max
+        $ case formulaDependants formula of
+            [] -> strWrap "Not required by any other formula"
+            ds ->
+              strWrap
+                . ("Required by " ++)
                 . C8.unpack
                 . C8.intercalate (C8.pack ", ")
                 . map formulaName
