@@ -19,24 +19,29 @@ import           Brick.Types                    ( ViewportType(Vertical)
                                                 , Padding(Max)
                                                 , Widget
                                                 )
-import           Brick.Widgets.Core             ( hBox
+import           Brick.Widgets.Core             ( (<+>)
+                                                , hBox
                                                 , hLimit
                                                 , padBottom
                                                 , padLeft
                                                 , padRight
+                                                , padTop
                                                 , padTopBottom
                                                 , str
+                                                , strWrap
                                                 , vBox
+                                                , vLimit
                                                 , viewport
                                                 , withBorderStyle
-                                                , vLimit
                                                 )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorCurrent
                                                 , nonEmptyCursorNext
                                                 , nonEmptyCursorPrev
                                                 )
-import           Data.Brew                      ( BrewFormula(..) )
+import           Data.Brew                      ( BrewError(..)
+                                                , BrewFormula(..)
+                                                )
 import           Tui.Types                      ( UIFormulas(..)
                                                 , IsSelected
                                                 )
@@ -76,27 +81,93 @@ drawFormula isSelected = padRight Max . str . prefix . C8.unpack . formulaName
   where prefix = ((if isSelected then " * " else "   ") ++)
 
 selected :: Maybe BrewFormula -> Widget UIFormulas
-selected sel =
+selected maybeSelected =
   withBorderStyle BS.unicodeBold
     . B.border
     . C.vCenter
     . C.hCenter
     . vBox
-    $ [ str $ maybe
-          "select a formula by pushing ENTER to display it here with its dependants and dependencies"
-          show
-          sel
+    $ [ maybe
+          ( padLeft (Pad 3)
+          . padTop (Pad 1)
+          . padBottom Max
+          . strWrap
+          $ "select a formula by pushing ENTER to display it here with its dependants and dependencies"
+          )
+          displaySelected
+          maybeSelected
       ]
 
-status :: String -> Widget UIFormulas
-status st =
+displaySelected :: BrewFormula -> Widget UIFormulas
+displaySelected formula =
+  vBox [displayInfo formula, displayDependencies formula, displayDependants formula]
+
+displayDependants :: BrewFormula -> Widget UIFormulas
+displayDependants formula =
+  B.borderWithLabel (B.vBorder <+> str " Usage " <+> B.vBorder)
+    . vLimit 3
+    . C.vCenter
+    . C.hCenter
+    . hBox
+    $ [ padLeft (Pad 3)
+        . padTop (Pad 1)
+        . padBottom Max
+        $ case formulaDependants formula of
+            [] -> strWrap "Not required by any other formula"
+            ds ->
+              strWrap
+                . ("Required by " ++)
+                . C8.unpack
+                . C8.intercalate (C8.pack ", ")
+                . map formulaName
+                $ ds
+      ]
+
+displayInfo :: BrewFormula -> Widget UIFormulas
+displayInfo formula =
+  B.borderWithLabel (B.vBorder <+> str " Formula " <+> B.vBorder)
+    . C.vCenter
+    . C.hCenter
+    . hBox
+    $ [ padLeft (Pad 3)
+        . padTop (Pad 1)
+        . padRight Max
+        . padBottom Max
+        $ case formulaInfo formula of
+            Nothing   -> strWrap "No further information available"
+            Just info -> strWrap . C8.unpack $ info
+      ]
+
+displayDependencies :: BrewFormula -> Widget UIFormulas
+displayDependencies formula =
+  B.borderWithLabel (B.vBorder <+> str " Dependencies " <+> B.vBorder)
+    . vLimit 3
+    . C.vCenter
+    . C.hCenter
+    . hBox
+    $ [ padLeft (Pad 3)
+        . padTop (Pad 1)
+        . padBottom Max
+        $ case formulaDependencies formula of
+            [] -> strWrap "Does not depend on any other formula"
+            ds ->
+              strWrap
+                . ("Depends on " ++)
+                . C8.unpack
+                . C8.intercalate (C8.pack ", ")
+                . map formulaName
+                $ ds
+      ]
+
+status :: String -> Maybe BrewError -> Widget UIFormulas
+status st err =
   withBorderStyle BS.unicodeBold
     . B.border
     . vLimit bottomHeight
     . C.vCenter
     . C.hCenter
     . hBox
-    $ [vBox [padLeft (Pad 3) . padRight Max . padBottom Max $ str st]]
+    $ [vBox [padLeft (Pad 3) . padRight Max . padBottom Max . str $ maybe st show err]]
 
 help :: Widget UIFormulas
 help =
@@ -109,9 +180,11 @@ help =
     . hBox
     $ [ padRight Max
         . vBox
-        $ [ str "   ENTER : Show selected"
-          , str "   x     : Delete selected"
+        $ [ str "   ENTER : Display selected"
+          , str "   s     : Search formula"
           , str "   i     : Install new"
+          , str "   u     : Uninstall selected"
+          , str "   U     : Update all"
           , str "   q     : Exit"
           ]
       ]
@@ -120,4 +193,4 @@ leftWidth :: Int
 leftWidth = 30
 
 bottomHeight :: Int
-bottomHeight = 4
+bottomHeight = 6

@@ -5,8 +5,9 @@ module Tui.Main
   )
 where
 
-import qualified Tui.Widgets                   as W
+import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
+import qualified Tui.Widgets                   as W
 
 import           Control.Brew.Commands          ( listFormulas )
 import           Control.Brew.Usage             ( getCompleteFormulaInfo )
@@ -35,7 +36,7 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorCurrent
                                                 , makeNonEmptyCursor
                                                 )
-import           Data.Brew                      ( BrewFormula
+import           Data.Brew                      ( BrewFormula(..)
                                                 , emptyFormula
                                                 )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
@@ -70,9 +71,13 @@ drawTui s =
     nfs = stateNumberFormulas s
     sel = stateSelected s
     st  = stateStatus s
+    err = stateError s
   in
     [ vBox
-        [W.title t, hBox [W.formulas nfs fs, W.selected sel], hBox [W.help, W.status st]]
+        [ W.title t
+        , hBox [W.formulas nfs fs, W.selected sel]
+        , hBox [W.help, W.status st err]
+        ]
     ]
 
 startTuiEvent :: TuiState -> EventM UIFormulas TuiState
@@ -86,10 +91,14 @@ startTuiEvent s = do
 
 
 handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
-handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
+handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = halt s -- TODO implement brew uninstall
+handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
+handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = halt s -- TODO implement brew install
+handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = halt s -- TODO implement brew upgrade
+handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
 handleTuiEvent s _ = continue s
 
 scroll
@@ -116,5 +125,8 @@ displayFormula :: TuiState -> EventM UIFormulas (Next TuiState)
 displayFormula s = do
   selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
   case selected of
-    Left  err     -> halt s { stateError = Just err }
-    Right formula -> continue s { stateSelected = Just formula }
+    Left  err     -> halt s { stateStatus = "Error occured", stateError = Just err }
+    Right formula -> continue s
+      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " selected"
+      , stateSelected = Just formula
+      }
