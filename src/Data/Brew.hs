@@ -14,6 +14,7 @@ type ErrorOrFormula = Either BrewError BrewFormula
 
 data BrewFormula = BrewFormula
   { formulaName :: B.ByteString,
+    formulaInfo :: Maybe B.ByteString,
     formulaDependencies :: [BrewFormula],
     formulaDependants :: [BrewFormula]
   }
@@ -23,18 +24,27 @@ instance Show BrewFormula where
     [ "\n"
     , C8.unpack . formulaName $ formula
     , "\n"
+    , "==> Info"
+    , "\n"
+    , info
+    , "\n"
+    , "==> Used by"
+    , "\n"
     , dependantList
+    , "\n"
+    , "== Depends on"
     , "\n"
     , dependencyList
     , "\n"
     ]
    where
+    info           = maybe "N/A" C8.unpack . formulaInfo $ formula
     dependencyList = case formulaDependencies formula of
-      []       -> "  has no dependencies"
-      formulas -> "  depends on " ++ formulaNames formulas
+      []       -> "N/A"
+      formulas -> formulaNames formulas
     dependantList  = case formulaDependants formula of
-      []       -> "  is not used by any other formula"
-      formulas -> "  is used by " ++ formulaNames formulas
+      []       -> "N/A"
+      formulas -> formulaNames formulas
     formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
 
 instance Eq BrewFormula  where
@@ -75,5 +85,8 @@ instance Read Answer where
     _      -> [(Que, [])]
 
 emptyFormula :: BrewFormula
-emptyFormula =
-  BrewFormula { formulaName = "", formulaDependencies = [], formulaDependants = [] }
+emptyFormula = BrewFormula { formulaName         = ""
+                           , formulaInfo         = Nothing
+                           , formulaDependencies = []
+                           , formulaDependants   = []
+                           }

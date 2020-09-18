@@ -9,7 +9,7 @@ import qualified Tui.Widgets                   as W
 import qualified Data.List.NonEmpty            as NE
 
 import           Control.Brew.Commands          ( listFormulas )
-import           Control.Brew.Usage             ( readFormulaUsage )
+import           Control.Brew.Usage             ( getCompleteFormulaInfo )
 import           Control.Monad.IO.Class         ( liftIO )
 import           Brick.AttrMap                  ( attrMap )
 import           Brick.Main                     ( ViewportScroll
@@ -114,7 +114,7 @@ up = -1
 
 displayFormula :: TuiState -> EventM UIFormulas (Next TuiState)
 displayFormula s = do
-  selected <- liftIO . readFormulaUsage . nonEmptyCursorCurrent . stateFormulas $ s
+  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
   case selected of
     Left  err     -> halt s { stateError = Just err }
     Right formula -> continue s { stateSelected = Just formula }

@@ -1,7 +1,7 @@
 module Control.Brew.Usage
   ( listFormulas
-  , listFormulasWithDependants
-  , readFormulaUsage
+  , listFormulasComplete
+  , getCompleteFormulaInfo
   )
 where
 
@@ -22,31 +22,31 @@ listFormulas = C.listFormulas >>= procErrorOrFormulas False
 --
 --
 -- list all formulas with respective usages
-listFormulasWithDependants :: IO [ErrorOrFormula]
-listFormulasWithDependants = C.listFormulas >>= procErrorOrFormulas True
+listFormulasComplete :: IO [ErrorOrFormula]
+listFormulasComplete = C.listFormulas >>= procErrorOrFormulas True
+
+--
+--
+-- get full info for the given formula
+getCompleteFormulaInfo :: BrewFormula -> IO ErrorOrFormula
+getCompleteFormulaInfo formula = do
+  i <- C.getFormulaInfo formula
+  u <- C.getFormulaUsage formula
+  return $ procErrorOrFormulaCompleteWithUsage i u
 
 -- process error or retrieve usage for the given formulas
 procErrorOrFormulas :: Bool -> ErrorOrFormulas -> IO [ErrorOrFormula]
-procErrorOrFormulas b (Right formulas) =
-  if b then parallel $ map readFormulaUsage formulas else return $ map Right formulas
-procErrorOrFormulas _ (Left err) = return [Left err]
-
---
---
--- get dependants of and assign them to the given formula
-readFormulaUsage :: BrewFormula -> IO ErrorOrFormula
-readFormulaUsage formula = do
-  usage <- C.listDependants formula
-  deps  <- C.listDependencies formula
-  return $ procErrorOrFormulaUsage formula usage deps
+procErrorOrFormulas complete (Right formulas) = if complete
+  then parallel $ map getCompleteFormulaInfo formulas
+  else return $ map Right formulas
+procErrorOrFormulas _        (Left  err     ) = return [Left err]
 
 -- process error or assign retrieved dependent formulas to the given formula
-procErrorOrFormulaUsage
-  :: BrewFormula       -- the formula
-  -> ErrorOrFormulas   -- the dependants
-  -> ErrorOrFormulas   -- the dependencies
+procErrorOrFormulaCompleteWithUsage
+  :: ErrorOrFormula    -- the formula with info
+  -> ErrorOrFormula    -- the formula with dependants
   -> ErrorOrFormula    -- the formula including the dependants and the dependencies
-procErrorOrFormulaUsage formula (Right dpns) (Right deps) =
-  Right $ formula { formulaDependants = dpns, formulaDependencies = deps }
-procErrorOrFormulaUsage _ (Left err) _          = Left err
-procErrorOrFormulaUsage _ _          (Left err) = Left err
+procErrorOrFormulaCompleteWithUsage (Right formula) (Right dpns) =
+  Right $ formula { formulaDependants = formulaDependants dpns }
+procErrorOrFormulaCompleteWithUsage (Left err) _          = Left err
+procErrorOrFormulaCompleteWithUsage _          (Left err) = Left err

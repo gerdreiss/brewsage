@@ -2,7 +2,7 @@ module Main where
 
 import           Control.Brew.Maintenance       ( procFormulas )
 import           Control.Brew.Usage             ( listFormulas
-                                                , listFormulasWithDependants
+                                                , listFormulasComplete
                                                 )
 import           Data.Either                    ( lefts
                                                 , rights
@@ -27,7 +27,7 @@ main = do
       putStr "Reading formula information... "
       hFlush stdout
       start    <- getCurrentTime
-      formulas <- listFormulasWithDependants
+      formulas <- listFormulasComplete
       stop     <- getCurrentTime
       putStrLn "Done."
       putStrLn ("Time elapsed: " ++ show (diffUTCTime stop start))
