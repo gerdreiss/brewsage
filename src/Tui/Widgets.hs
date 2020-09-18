@@ -4,8 +4,8 @@ module Tui.Widgets
   ( title
   , formulas
   , selected
-  , status
   , help
+  , status
   )
 where
 
@@ -41,11 +41,9 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
 import           Data.Brew                      ( BrewError(..)
                                                 , BrewFormula(..)
                                                 )
-import           Tui.Types                      ( UIFormulas(..)
-                                                , IsSelected
-                                                )
+import           Tui.Types                      ( RName(..) )
 
-title :: String -> Widget UIFormulas
+title :: String -> Widget RName
 title t =
   withBorderStyle BS.unicodeBold
     . B.border
@@ -55,13 +53,13 @@ title t =
     . vBox
     $ [str t]
 
-formulas :: Int -> NonEmptyCursor BrewFormula -> Widget UIFormulas
+formulas :: Int -> NonEmptyCursor BrewFormula -> Widget RName
 formulas nfs fs =
   withBorderStyle BS.unicodeBold
     . B.border
     . hLimit leftWidth
     . vBox
-    $ [ viewport UIFormulas Vertical
+    $ [ viewport Formulas Vertical
         . vBox
         $ [ padTopBottom 1
             . hLimit leftWidth
@@ -75,11 +73,11 @@ formulas nfs fs =
           ]
       ]
 
-drawFormula :: IsSelected -> BrewFormula -> Widget UIFormulas
+drawFormula :: Bool -> BrewFormula -> Widget RName
 drawFormula isSelected = padRight Max . str . prefix . C8.unpack . formulaName
   where prefix = ((if isSelected then " * " else "   ") ++)
 
-selected :: Maybe BrewFormula -> Widget UIFormulas
+selected :: Maybe BrewFormula -> Widget RName
 selected maybeSelected =
   withBorderStyle BS.unicodeBold
     . B.border
@@ -97,11 +95,11 @@ selected maybeSelected =
           maybeSelected
       ]
 
-displaySelected :: BrewFormula -> Widget UIFormulas
+displaySelected :: BrewFormula -> Widget RName
 displaySelected formula =
   vBox [displayInfo formula, displayDependencies formula, displayDependants formula]
 
-displayInfo :: BrewFormula -> Widget UIFormulas
+displayInfo :: BrewFormula -> Widget RName
 displayInfo formula =
   B.border -- WithLabel (B.vBorder <+> str " Formula      " <+> B.vBorder)
     . C.vCenter
@@ -116,7 +114,7 @@ displayInfo formula =
             Just info -> strWrap . C8.unpack $ info
       ]
 
-displayDependencies :: BrewFormula -> Widget UIFormulas
+displayDependencies :: BrewFormula -> Widget RName
 displayDependencies formula =
   B.border -- WithLabel (B.vBorder <+> str " Dependencies " <+> B.vBorder)
     . vLimit 3
@@ -137,7 +135,7 @@ displayDependencies formula =
                 $ ds
       ]
 
-displayDependants :: BrewFormula -> Widget UIFormulas
+displayDependants :: BrewFormula -> Widget RName
 displayDependants formula =
   B.border -- WithLabel (B.vBorder <+> str " Usage        " <+> B.vBorder)
     . vLimit 3
@@ -158,7 +156,7 @@ displayDependants formula =
                 $ ds
       ]
 
-status :: String -> Maybe BrewError -> Widget UIFormulas
+status :: String -> Maybe BrewError -> Widget RName
 status st err =
   withBorderStyle BS.unicodeBold
     . B.border
@@ -168,7 +166,7 @@ status st err =
     . hBox
     $ [vBox [padLeft (Pad 3) . padRight Max . padBottom Max . str $ maybe st show err]]
 
-help :: Widget UIFormulas
+help :: Widget RName
 help =
   withBorderStyle BS.unicodeBold
     . B.border

@@ -45,7 +45,7 @@ import           Graphics.Vty.Input.Events      ( Event(EvKey)
 import           Tui.State                      ( TuiState(..)
                                                 , buildInitialState
                                                 )
-import           Tui.Types                      ( UIFormulas(..) )
+import           Tui.Types                      ( RName(..) )
 
 
 type ScrollDir = Int
@@ -55,7 +55,7 @@ tui :: [BrewFormula] -> IO ()
 tui fs = buildInitialState fs >>= defaultMain tuiApp >>= printExitStatus
   where printExitStatus = print . maybe "Exited with success" show . stateError
 
-tuiApp :: App TuiState e UIFormulas
+tuiApp :: App TuiState e RName
 tuiApp = App { appDraw         = drawTui
              , appChooseCursor = showFirstCursor
              , appStartEvent   = pure --startTuiEvent
@@ -63,7 +63,7 @@ tuiApp = App { appDraw         = drawTui
              , appAttrMap      = const $ attrMap mempty mempty
              }
 
-drawTui :: TuiState -> [Widget UIFormulas]
+drawTui :: TuiState -> [Widget RName]
 drawTui s =
   let
     t   = stateTitle s
@@ -80,7 +80,7 @@ drawTui s =
         ]
     ]
 
-startTuiEvent :: TuiState -> EventM UIFormulas TuiState
+startTuiEvent :: TuiState -> EventM RName TuiState
 startTuiEvent s = do
   formulas <- liftIO listFormulas
   case formulas of
@@ -89,8 +89,7 @@ startTuiEvent s = do
       return s { stateFormulas = makeNonEmptyCursor $ NE.fromList [emptyFormula] }
     Right fs -> return s { stateFormulas = makeNonEmptyCursor $ NE.fromList fs }
 
-
-handleTuiEvent :: TuiState -> BrickEvent n e -> EventM UIFormulas (Next TuiState)
+handleTuiEvent :: TuiState -> BrickEvent n e -> EventM RName (Next TuiState)
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
@@ -105,15 +104,15 @@ scroll
   :: ScrollDir                          -- scroll direction: 1 = down, -1 = up
   -> ScrollF                            -- function to select the next/previous formula
   -> TuiState                           -- the TUI state
-  -> EventM UIFormulas (Next TuiState)
+  -> EventM RName (Next TuiState)
 scroll direction scrollF s = case scrollF . stateFormulas $ s of
   Nothing       -> continue s
   Just formulas -> do
     vScrollBy uiFormulaScroll direction
     continue $ s { stateFormulas = formulas }
 
-uiFormulaScroll :: ViewportScroll UIFormulas
-uiFormulaScroll = viewportScroll UIFormulas
+uiFormulaScroll :: ViewportScroll RName
+uiFormulaScroll = viewportScroll Formulas
 
 down :: Int
 down = 1
@@ -121,7 +120,7 @@ down = 1
 up :: Int
 up = -1
 
-displayFormula :: TuiState -> EventM UIFormulas (Next TuiState)
+displayFormula :: TuiState -> EventM RName (Next TuiState)
 displayFormula s = do
   selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
   case selected of

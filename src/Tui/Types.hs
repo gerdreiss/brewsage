@@ -1,9 +1,6 @@
 module Tui.Types
-  ( UIFormulas(..)
-  , IsSelected
+  ( RName(..)
   )
 where
 
-type IsSelected = Bool
-
-data UIFormulas = UIFormulas deriving (Eq, Ord, Show)
+data RName = Formulas deriving (Eq, Ord, Show)
