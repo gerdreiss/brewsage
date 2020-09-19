@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Tui.Widgets
   ( title
   , formulas
@@ -9,9 +7,9 @@ module Tui.Widgets
   )
 where
 
-import qualified Brick.Widgets.Center          as C
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
+import qualified Brick.Widgets.Center          as C
 import qualified Data.ByteString.Lazy.Char8    as C8
 
 import           Brick                          ( Padding(Pad) )
@@ -42,6 +40,7 @@ import           Data.Brew                      ( BrewError(..)
                                                 , BrewFormula(..)
                                                 )
 import           Tui.Types                      ( RName(..) )
+
 
 title :: String -> Widget RName
 title t =

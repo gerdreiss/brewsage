@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Data.Brew where
 
 import qualified Data.ByteString.Lazy          as B
