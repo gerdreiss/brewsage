@@ -79,9 +79,7 @@ drawFormula isSelected = padRight Max . str . prefix . C8.unpack . formulaName
 
 selected :: Maybe BrewFormula -> Widget RName
 selected maybeSelected =
-  withBorderStyle BS.unicodeBold
-    . B.border
-    . C.vCenter
+  C.vCenter
     . C.hCenter
     . vBox
     $ [ maybe
