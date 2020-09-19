@@ -29,9 +29,12 @@ dependencies:
   - brick
   - vty
   - cursor
+  - text
 
 library:
   source-dirs: src
+  default-extensions:
+    - OverloadedStrings
 
 executables:
   brewsage-exe:
@@ -45,6 +48,8 @@ executables:
       - -Werror
       - -Wunused-imports
       - -Wwarn=unused-imports
+    default-extensions:
+      - OverloadedStrings
     dependencies:
       - brewsage
 

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Tui.Main
   ( tui
   )
@@ -7,11 +5,9 @@ where
 
 import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
+import qualified Tui.Popup                     as P
 import qualified Tui.Widgets                   as W
 
-import           Control.Brew.Commands          ( listFormulas )
-import           Control.Brew.Usage             ( getCompleteFormulaInfo )
-import           Control.Monad.IO.Class         ( liftIO )
 import           Brick.AttrMap                  ( attrMap )
 import           Brick.Main                     ( ViewportScroll
                                                 , viewportScroll
@@ -30,6 +26,9 @@ import           Brick.Types                    ( Widget
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
+import           Control.Brew.Commands          ( listFormulas )
+import           Control.Brew.Usage             ( getCompleteFormulaInfo )
+import           Control.Monad.IO.Class         ( liftIO )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
@@ -58,27 +57,30 @@ tui fs = buildInitialState fs >>= defaultMain tuiApp >>= printExitStatus
 tuiApp :: App TuiState e RName
 tuiApp = App { appDraw         = drawTui
              , appChooseCursor = showFirstCursor
-             , appStartEvent   = pure --startTuiEvent
+             , appStartEvent   = return --startTuiEvent
              , appHandleEvent  = handleTuiEvent
              , appAttrMap      = const $ attrMap mempty mempty
              }
 
 drawTui :: TuiState -> [Widget RName]
-drawTui s =
+drawTui s = maybe [ui s] (\p -> [P.renderPopup p, ui s]) (statePopup s)
+
+ui :: TuiState -> Widget RName
+ui s =
   let
     t   = stateTitle s
     fs  = stateFormulas s
     nfs = stateNumberFormulas s
-    sel = stateSelected s
+    sel = stateSelectedFormula s
     st  = stateStatus s
     err = stateError s
   in
-    [ vBox
-        [ W.title t
-        , hBox [W.formulas nfs fs, W.selected sel]
-        , hBox [W.help, W.status st err]
-        ]
-    ]
+    vBox
+      [ W.title t
+      , hBox [W.formulas nfs fs, W.selected sel]
+      , hBox [W.help, W.status st err]
+      ]
+
 
 startTuiEvent :: TuiState -> EventM RName TuiState
 startTuiEvent s = do
@@ -93,6 +95,10 @@ handleTuiEvent :: TuiState -> BrickEvent n e -> EventM RName (Next TuiState)
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
+handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = continue s
+  { statePopup = Just
+                   $ P.popup "About" "About Brewsage" [("OK", continue), ("Cancel", halt)]
+  }
 handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = halt s -- TODO implement brew uninstall
 handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
 handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = halt s -- TODO implement brew install
@@ -111,6 +117,17 @@ scroll direction scrollF s = case scrollF . stateFormulas $ s of
     vScrollBy uiFormulaScroll direction
     continue $ s { stateFormulas = formulas }
 
+
+displayFormula :: TuiState -> EventM RName (Next TuiState)
+displayFormula s = do
+  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
+  case selected of
+    Left  err     -> halt s { stateStatus = "Error occured", stateError = Just err }
+    Right formula -> continue s
+      { stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
+      , stateSelectedFormula = Just formula
+      }
+
 uiFormulaScroll :: ViewportScroll RName
 uiFormulaScroll = viewportScroll Formulas
 
@@ -119,13 +136,3 @@ down = 1
 
 up :: Int
 up = -1
-
-displayFormula :: TuiState -> EventM RName (Next TuiState)
-displayFormula s = do
-  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
-  case selected of
-    Left  err     -> halt s { stateStatus = "Error occured", stateError = Just err }
-    Right formula -> continue s
-      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " displayed"
-      , stateSelected = Just formula
-      }
