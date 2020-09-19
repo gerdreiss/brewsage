@@ -5,3 +5,5 @@ Checks dependants of each installed homebrew formula, and offers deletion of eac
 ## TUI
 
 Calling ```brewsage --tui``` opens the application in a TUI (terminal user interface)
+
+![Brewsage TUI](doc/brewsage-tui.png)
