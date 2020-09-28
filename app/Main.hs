@@ -21,8 +21,10 @@ main = do
   args <- getArgs
   case args of
     ("--tui" : _) -> do
-      formulas <- listFormulas
-      tui . rights $ formulas
+      formulasOrErrors <- listFormulas
+      case sequence formulasOrErrors of
+        Left  err      -> print err
+        Right formulas -> tui formulas
     _             -> do
       putStr "Reading formula information... "
       hFlush stdout
