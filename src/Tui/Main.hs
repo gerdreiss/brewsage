@@ -173,9 +173,9 @@ uninstall s = suspendAndResume $ do
     Just formula -> do
       formulas <- uninstallFormula formula >> listFormulas
       case formulas of
-        Left err -> return s { stateStatus = "Error occurred", stateError = Just err }
-        Right formulas -> return s
+        Left  err -> return s { stateStatus = "Error occurred", stateError = Just err }
+        Right fs  -> return s
           { stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
-          , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
+          , stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
           , stateSelectedFormula = Nothing
           }
