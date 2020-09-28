@@ -46,7 +46,7 @@ instance Show BrewFormula where
     formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
 
 instance Eq BrewFormula  where
-  (==) f1 f2 = formulaName f1 == formulaName f2
+  f1 == f2 = formulaName f1 == formulaName f2
 
 data BrewError = BrewError
   { errorCode :: Int,
@@ -62,7 +62,7 @@ instance Show BrewError where
     ]
 
 instance Eq BrewError where
-  (==) e1 e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
+  e1 == e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
 
 data Answer
   = Yes
