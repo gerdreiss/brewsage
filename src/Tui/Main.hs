@@ -164,14 +164,18 @@ upgradeAll s = suspendAndResume $ do
       , stateSelectedFormula = Nothing
       }
 
+-- | uninstall the selected formula
 uninstall :: TuiState -> EventM RName (Next TuiState)
 uninstall s = suspendAndResume $ do
-  let formula = nonEmptyCursorCurrent . stateFormulas $ s
-  formulas <- uninstallFormula formula >> listFormulas
-  case formulas of
-    Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
-    Right formulas -> return s
-      { stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
-      , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
-      , stateSelectedFormula = Nothing
-      }
+  let maybeFormula = stateSelectedFormula s
+  case maybeFormula of
+    Nothing      -> return s { stateStatus = "Select a formula before deleting" }
+    Just formula -> do
+      formulas <- uninstallFormula formula >> listFormulas
+      case formulas of
+        Left err -> return s { stateStatus = "Error occurred", stateError = Just err }
+        Right formulas -> return s
+          { stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
+          , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
+          , stateSelectedFormula = Nothing
+          }
