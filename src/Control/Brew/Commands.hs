@@ -56,14 +56,15 @@ listDependencies formula =
     <$> (processInfoResult <$> (execBrewInfo . formulaName $ formula))
 
 -- uninstall formula
-uninstallFormula :: BrewFormula -> IO ErrorOrFormulas
-uninstallFormula formula =
-  printMessage >> (execBrewUninstall . formulaName $ formula) >> listFormulas
- where
-  printMessage =
-    putStrLn
-      . concat
-      $ ["Uninstalling formula '", C8.unpack . formulaName $ formula, "'..."]
+uninstallFormula :: BrewFormula -> IO ErrorOrFormula
+uninstallFormula formula = do
+  putStrLn
+    . concat
+    $ ["Uninstalling formula '", C8.unpack . formulaName $ formula, "'..."]
+  result <- execBrewUninstall . formulaName $ formula
+  case result of
+    (ExitFailure code, _  , err) -> return $ Left (BrewError code err)
+    (ExitSuccess     , out, _  ) -> return $ Right formula
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
