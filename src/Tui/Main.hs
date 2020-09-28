@@ -27,7 +27,8 @@ import           Brick.Types                    ( Widget
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
-import           Control.Brew.Commands          ( upgradeAllFormulas
+import           Control.Brew.Commands          ( uninstallFormula
+                                                , upgradeAllFormulas
                                                 , listFormulas
                                                 )
 import           Control.Brew.Usage             ( getCompleteFormulaInfo )
@@ -109,7 +110,7 @@ handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = continue s
   { statePopup = Just
                    $ P.popup "About" "About Brewsage" [("OK", continue), ("Cancel", halt)]
   }
-handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = halt s -- TODO implement brew uninstall
+handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = uninstall s
 handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
 handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = halt s -- TODO implement brew install
 handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = upgradeAll s
@@ -159,5 +160,16 @@ upgradeAll s = suspendAndResume $ do
     Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
     Right formulas -> return s
       { stateStatus   = "All formulas upgraded"
+      , stateFormulas = makeNonEmptyCursor $ NE.fromList formulas
+      }
+
+uninstall :: TuiState -> EventM RName (Next TuiState)
+uninstall s = suspendAndResume $ do
+  let formula = nonEmptyCursorCurrent . stateFormulas $ s
+  formulas <- uninstallFormula formula
+  case formulas of
+    Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
+    Right formulas -> return s
+      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " uninstalled"
       , stateFormulas = makeNonEmptyCursor $ NE.fromList formulas
       }

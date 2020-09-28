@@ -6,6 +6,7 @@ module Control.Brew.Commands
   , listFormulas
   , listDependants
   , listDependencies
+  , uninstallFormula
   , upgradeAllFormulas
   )
 where
@@ -25,6 +26,11 @@ import           System.Process.Typed           ( proc
 import           Data.List.Safe                 ( safeHead )
 
 type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
+
+-- upgrade and return upgraded all formulas
+upgradeAllFormulas :: IO ErrorOrFormulas
+upgradeAllFormulas =
+  putStrLn "executing brew upgrade..." >> execBrewUpgrade >> listFormulas
 
 -- list installed homebrew formulas
 listFormulas :: IO ErrorOrFormulas
@@ -49,13 +55,23 @@ listDependencies formula =
   fmap formulaDependencies
     <$> (processInfoResult <$> (execBrewInfo . formulaName $ formula))
 
--- upgrade and return upgraded all formulas
-upgradeAllFormulas :: IO ErrorOrFormulas
-upgradeAllFormulas = execBrewUpgrade >> listFormulas
+-- uninstall formula
+uninstallFormula :: BrewFormula -> IO ErrorOrFormulas
+uninstallFormula formula =
+  printMessage >> (execBrewUninstall . formulaName $ formula) >> listFormulas
+ where
+  printMessage =
+    putStrLn
+      . concat
+      $ ["Uninstalling formula '", C8.unpack . formulaName $ formula, "'..."]
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
 execBrewList = readProcess "brew list"
+
+-- execute "brew upgrade"
+execBrewUpgrade :: IO ReadProcessResult
+execBrewUpgrade = readProcess $ proc "brew" ["upgrade"]
 
 -- execute "brew uses --installed" for the given formula
 execBrewUses :: B.ByteString -> IO ReadProcessResult
@@ -66,9 +82,9 @@ execBrewUses formula =
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
 execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
 
--- execute "brew upgrade"
-execBrewUpgrade :: IO ReadProcessResult
-execBrewUpgrade = readProcess $ proc "brew" ["upgrade"]
+-- execute "brew uninstall 'formula-name'"
+execBrewUninstall :: B.ByteString -> IO ReadProcessResult
+execBrewUninstall formula = readProcess $ proc "brew" ["uninstall", C8.unpack formula]
 
 -- process results of a brew command that returns a list of formulas
 processListResult :: ReadProcessResult -> ErrorOrFormulas
