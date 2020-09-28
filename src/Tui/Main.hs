@@ -159,17 +159,19 @@ upgradeAll s = suspendAndResume $ do
   case upgraded of
     Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
     Right formulas -> return s
-      { stateStatus   = "All formulas upgraded"
-      , stateFormulas = makeNonEmptyCursor $ NE.fromList formulas
+      { stateStatus          = "All formulas upgraded"
+      , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
+      , stateSelectedFormula = Nothing
       }
 
 uninstall :: TuiState -> EventM RName (Next TuiState)
 uninstall s = suspendAndResume $ do
   let formula = nonEmptyCursorCurrent . stateFormulas $ s
-  formulas <- uninstallFormula formula
+  formulas <- uninstallFormula formula >> listFormulas
   case formulas of
     Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
     Right formulas -> return s
-      { stateStatus   = (C8.unpack . formulaName $ formula) ++ " uninstalled"
-      , stateFormulas = makeNonEmptyCursor $ NE.fromList formulas
+      { stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
+      , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
+      , stateSelectedFormula = Nothing
       }
