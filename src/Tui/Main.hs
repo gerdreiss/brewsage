@@ -117,7 +117,7 @@ handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = upgradeAll s
 handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
 handleTuiEvent s _ = continue s
 
---
+-- | scroll viewport
 scroll
   :: ScrollDir                          -- scroll direction: 1 = down, -1 = up
   -> ScrollF                            -- function to select the next/previous formula
