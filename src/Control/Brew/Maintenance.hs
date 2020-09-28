@@ -4,6 +4,7 @@ module Control.Brew.Maintenance
   )
 where
 
+import           Control.Brew.Commands          ( uninstallFormula )
 import           Data.Brew                      ( Answer(..)
                                                 , BrewFormula(..)
                                                 )
@@ -48,7 +49,7 @@ askDeleteFormula formula = do
 -- delete the given formula
 deleteFormula :: BrewFormula -> IO ()
 deleteFormula formula = do
-  input <- readProcess $ proc "brew" ["uninstall", unpack . formulaName $ formula]
+  input <- uninstallFormula formula
   case input of
-    (ExitSuccess  , out, _  ) -> print out
-    (ExitFailure _, _  , err) -> print err
+    Right formula -> print $ (unpack . formulaName $ formula) ++ " uninstalled"
+    Left  error   -> print error
