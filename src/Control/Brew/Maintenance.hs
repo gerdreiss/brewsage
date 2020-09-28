@@ -9,14 +9,9 @@ import           Data.Brew                      ( Answer(..)
                                                 , BrewFormula(..)
                                                 )
 import           Data.ByteString.Lazy.Char8     ( unpack )
-import           System.Exit                    ( ExitCode(..)
-                                                , exitSuccess
-                                                )
+import           System.Exit                    ( exitSuccess )
 import           System.IO                      ( hFlush
                                                 , stdout
-                                                )
-import           System.Process.Typed           ( proc
-                                                , readProcess
                                                 )
 
 --
@@ -51,5 +46,5 @@ deleteFormula :: BrewFormula -> IO ()
 deleteFormula formula = do
   input <- uninstallFormula formula
   case input of
-    Right formula -> print $ (unpack . formulaName $ formula) ++ " uninstalled"
-    Left  error   -> print error
+    Right f -> print $ (unpack . formulaName $ f) ++ " uninstalled"
+    Left  e -> print e
