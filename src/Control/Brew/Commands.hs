@@ -6,6 +6,7 @@ module Control.Brew.Commands
   , listFormulas
   , listDependants
   , listDependencies
+  , upgradeAllFormulas
   )
 where
 
@@ -48,6 +49,10 @@ listDependencies formula =
   fmap formulaDependencies
     <$> (processInfoResult <$> (execBrewInfo . formulaName $ formula))
 
+-- upgrade and return upgraded all formulas
+upgradeAllFormulas :: IO ErrorOrFormulas
+upgradeAllFormulas = execBrewUpgrade >> listFormulas
+
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
 execBrewList = readProcess "brew list"
@@ -60,6 +65,10 @@ execBrewUses formula =
 -- execute "brew info" for the given formula
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
 execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
+
+-- execute "brew upgrade"
+execBrewUpgrade :: IO ReadProcessResult
+execBrewUpgrade = readProcess $ proc "brew" ["upgrade"]
 
 -- process results of a brew command that returns a list of formulas
 processListResult :: ReadProcessResult -> ErrorOrFormulas
