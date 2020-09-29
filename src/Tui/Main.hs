@@ -43,12 +43,13 @@ import           Data.Brew                      ( BrewFormula(..)
                                                 , emptyFormula
                                                 )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
-                                                , Key(KEnter, KChar, KDown, KUp)
+                                                , Key(KEnter, KEsc, KChar, KDown, KUp)
                                                 )
 import           Tui.State                      ( TuiState(..)
                                                 , buildInitialState
                                                 )
 import           Tui.Types                      ( RName(..) )
+import           Data.List                      ( intercalate )
 
 
 type ScrollDir = Int
@@ -106,9 +107,20 @@ handleTuiEvent :: TuiState -> BrickEvent n e -> EventM RName (Next TuiState)
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
+handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { statePopup = Nothing }
 handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = continue s
-  { statePopup = Just
-                   $ P.popup "About" "About Brewsage" [("OK", continue), ("Cancel", halt)]
+  { statePopup = Just $ P.popup
+                   "About"
+                   [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
+                   , "Powered by Brick (https://github.com/jtdaugherty/brick)"
+                   , "Written in Haskell (https://www.haskell.org/)"
+                   , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
+                   , "Copyright (c) 2020, Gerd Reiss"
+                   , ""
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
   }
 handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = uninstall s
 handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
