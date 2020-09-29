@@ -63,8 +63,8 @@ uninstallFormula formula = do
     $ ["Uninstalling formula '", C8.unpack . formulaName $ formula, "'..."]
   result <- execBrewUninstall . formulaName $ formula
   case result of
-    (ExitFailure code, _  , err) -> return $ Left (BrewError code err)
-    (ExitSuccess     , out, _  ) -> return $ Right formula
+    (ExitFailure code, _, err) -> return $ Left (BrewError code err)
+    (ExitSuccess     , _, _  ) -> return $ Right formula
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
