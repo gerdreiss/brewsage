@@ -18,19 +18,26 @@ import qualified Graphics.Vty                  as VTY
 
 import           Brick                          ( vLimit
                                                 , padAll
-                                                , strWrap
+                                                , str
                                                 , vBox
                                                 )
 import           Brick.Types                    ( EventM
                                                 , Widget
                                                 )
+import           Data.List                      ( intercalate )
 
 data Popup n r = Popup (D.Dialog r) (Widget n)
 
-popup :: String -> String -> [(String, r)] -> Popup n r
-popup title content = popup'
+popup :: String -> [String] -> [(String, r)] -> Popup n r
+popup title contentLines = popup'
   title
-  (B.border . vLimit 5 . C.vCenter . C.hCenter . vBox $ [padAll 1 $ strWrap content])
+  ( B.border
+  . vLimit (2 + length contentLines)
+  . C.vCenter
+  . C.hCenter
+  . vBox
+  $ [padAll 1 . str . intercalate "\n" $ contentLines]
+  )
 
 popup' :: String -> Widget n -> [(String, r)] -> Popup n r
 popup' title widget results =
@@ -49,4 +56,4 @@ popupSelection :: Popup n r -> Maybe r
 popupSelection (Popup dialog _) = D.dialogSelection dialog
 
 minPopupWidth :: Int
-minPopupWidth = 50
+minPopupWidth = 70
