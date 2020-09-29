@@ -49,7 +49,6 @@ import           Tui.State                      ( TuiState(..)
                                                 , buildInitialState
                                                 )
 import           Tui.Types                      ( RName(..) )
-import           Data.List                      ( intercalate )
 
 
 type ScrollDir = Int
