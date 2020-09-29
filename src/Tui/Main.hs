@@ -108,20 +108,7 @@ handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNe
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { statePopup = Nothing }
-handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = continue s
-  { statePopup = Just $ P.popup
-                   "About"
-                   [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
-                   , "Powered by Brick (https://github.com/jtdaugherty/brick)"
-                   , "Written in Haskell (https://www.haskell.org/)"
-                   , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
-                   , "Copyright (c) 2020, Gerd Reiss"
-                   , ""
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
-  }
+handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = displayAbout s
 handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = uninstall s
 handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
 handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = halt s -- TODO implement brew install
@@ -163,6 +150,23 @@ displayFormula s = do
       { stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
       , stateSelectedFormula = Just formula
       }
+
+-- | display the 'About' dialog
+displayAbout :: TuiState -> EventM RName (Next TuiState)
+displayAbout s = continue s
+  { statePopup = Just $ P.popup
+                   "About"
+                   [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
+                   , "Powered by Brick (https://github.com/jtdaugherty/brick)"
+                   , "Written in Haskell (https://www.haskell.org/)"
+                   , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
+                   , "Copyright (c) 2020, Gerd Reiss"
+                   , ""
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
+  }
 
 -- | upgrade all formulas
 upgradeAll :: TuiState -> EventM RName (Next TuiState)
