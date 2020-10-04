@@ -51,7 +51,7 @@ instance Eq BrewFormula  where
 data BrewError = BrewError
   { errorCode :: Int,
     errorMessage :: B.ByteString
-  }
+  } deriving (Eq)
 
 instance Show BrewError where
   show err = concat
@@ -61,8 +61,8 @@ instance Show BrewError where
     , show . errorMessage $ err
     ]
 
-instance Eq BrewError where
-  e1 == e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
+-- instance Eq BrewError where
+--   e1 == e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
 
 data Answer
   = Yes

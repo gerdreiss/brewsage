@@ -109,8 +109,8 @@ handleTuiEvent s (VtyEvent (EvKey KEnter _)) = displayFormula s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { statePopup = Nothing }
 handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = displayAbout s
 handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = uninstall s
-handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = halt s -- TODO implement brew search
-handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = halt s -- TODO implement brew install
+handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = displaySearch s -- TODO implement brew search
+handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = displayInstall s -- TODO implement brew install
 handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = upgradeAll s
 handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
 handleTuiEvent s _ = continue s
@@ -166,6 +166,29 @@ displayAbout s = continue s
                    ]
                    []
   }
+
+-- | display the search dialog
+displaySearch :: TuiState -> EventM RName (Next TuiState)
+displaySearch = displayNotImplemented
+
+-- | display the install dialog
+displayInstall :: TuiState -> EventM RName (Next TuiState)
+displayInstall = displayNotImplemented
+
+-- | display the 'Not implemented' dialog
+displayNotImplemented :: TuiState -> EventM RName (Next TuiState)
+displayNotImplemented s = continue s
+  { statePopup = Just $ P.popup
+                   "Not implemented"
+                   [ "This feature is not yet implemented"
+                   , ""
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
+  }
+
+
 
 -- | upgrade all formulas
 upgradeAll :: TuiState -> EventM RName (Next TuiState)
