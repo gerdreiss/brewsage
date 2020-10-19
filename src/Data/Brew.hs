@@ -2,6 +2,11 @@ module Data.Brew where
 
 import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
+import qualified Data.List.NonEmpty            as NE
+
+import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
+                                                , makeNonEmptyCursor
+                                                )
 import           Data.Char                      ( isLetter
                                                 , toLower
                                                 )
@@ -88,3 +93,6 @@ emptyFormula = BrewFormula { formulaName         = ""
                            , formulaDependencies = []
                            , formulaDependants   = []
                            }
+
+emptyFormulaList :: NonEmptyCursor BrewFormula
+emptyFormulaList = makeNonEmptyCursor $ NE.fromList [emptyFormula]

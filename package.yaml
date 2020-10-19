@@ -30,11 +30,14 @@ dependencies:
   - vty
   - cursor
   - text
+  - microlens
+  - microlens-th
 
 library:
   source-dirs: src
   default-extensions:
     - OverloadedStrings
+    - TemplateHaskell
 
 executables:
   brewsage-exe:
