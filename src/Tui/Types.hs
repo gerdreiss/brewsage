@@ -3,4 +3,4 @@ module Tui.Types
   )
 where
 
-data RName = Formulas deriving (Eq, Ord, Show)
+data RName = Formulas | FormulaInfo deriving (Eq, Ord, Show)

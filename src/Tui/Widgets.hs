@@ -1,5 +1,6 @@
 module Tui.Widgets
   ( title
+  , formulaEditForm
   , formulas
   , selected
   , help
@@ -12,12 +13,21 @@ import qualified Brick.Widgets.Border.Style    as BS
 import qualified Brick.Widgets.Center          as C
 import qualified Data.ByteString.Lazy.Char8    as C8
 
+import           Lens.Micro.TH                  ( makeLenses )
 import           Brick                          ( Padding(Pad) )
+import           Brick.Forms                    ( (@@=)
+                                                , editTextField
+                                                , newForm
+                                                , renderForm
+                                                , Form
+                                                )
 import           Brick.Types                    ( ViewportType(Vertical)
                                                 , Padding(Max)
                                                 , Widget
                                                 )
-import           Brick.Widgets.Core             ( hBox
+import           Brick.Widgets.Core             ( (<+>)
+                                                , hBox
+                                                , fill
                                                 , hLimit
                                                 , padBottom
                                                 , padLeft
@@ -39,8 +49,10 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
 import           Data.Brew                      ( BrewError(..)
                                                 , BrewFormula(..)
                                                 )
+import           Tui.State                      ( FormulaInfoState(..) )
 import           Tui.Types                      ( RName(..) )
 
+makeLenses ''FormulaInfoState
 
 title :: String -> Widget RName
 title t =
@@ -188,3 +200,18 @@ leftWidth = 30
 
 bottomHeight :: Int
 bottomHeight = 6
+
+formulaEditForm :: FormulaInfoState -> Widget RName
+formulaEditForm info =
+  withBorderStyle BS.unicodeBold . B.border . renderForm $ formulaEdit info
+
+formulaEdit :: FormulaInfoState -> Form FormulaInfoState e RName
+formulaEdit =
+  let label s w =
+          padLeft (Pad 1)
+            $   padTop (Pad 1)
+            $   padBottom (Pad 1)
+            $   vLimit 1 (hLimit 15 $ str s <+> fill ' ')
+            <+> w
+  in  newForm
+        [label "Formula Name" @@= editTextField formulaInfoName FormulaInfo (Just 1)]
