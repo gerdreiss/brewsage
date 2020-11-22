@@ -1,14 +1,14 @@
-name:                brewsage
-version:             0.1.0.0
-github:              "gerdreiss/brewsage"
-license:             BSD3
-author:              "Gerd Reiss"
-maintainer:          "gerdreiss@jscriptive.com"
-copyright:           "jscriptive.com"
+name: brewsage
+version: 0.1.0.0
+github: "gerdreiss/brewsage"
+license: BSD3
+author: "Gerd Reiss"
+maintainer: "gerdreiss@jscriptive.com"
+copyright: "jscriptive.com"
 
 extra-source-files:
-- README.md
-- ChangeLog.md
+  - README.md
+  - ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -17,37 +17,52 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/gerdreiss/brewsage#readme>
+description: Please see the README on GitHub at <https://github.com/gerdreiss/brewsage#readme>
 
 dependencies:
-- base >= 4.7 && < 5
-- typed-process
-- bytestring
-- split
-- parallel-io
-- time
+  - base >= 4.7 && < 5
+  - typed-process
+  - bytestring
+  - split
+  - parallel-io
+  - time
+  - brick
+  - vty
+  - cursor
+  - text
+  - microlens
+  - microlens-th
 
 library:
   source-dirs: src
+  default-extensions:
+    - OverloadedStrings
+    - TemplateHaskell
 
 executables:
   brewsage-exe:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wall
+      - -Werror
+      - -Wunused-imports
+      - -Wwarn=unused-imports
+    default-extensions:
+      - OverloadedStrings
     dependencies:
-    - brewsage
+      - brewsage
 
 tests:
   brewsage-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - brewsage
+      - brewsage

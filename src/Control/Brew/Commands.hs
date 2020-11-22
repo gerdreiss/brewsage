@@ -1,59 +1,110 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Control.Brew.Commands
-  ( listFormulas
+  ( getFormulaInfo
+  , getFormulaUsage
+  , listFormulas
   , listDependants
   , listDependencies
+  , uninstallFormula
+  , upgradeAllFormulas
   )
 where
 
-import           Data.Brew
 import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
-import           System.Exit
+
+import           Data.Brew                      ( BrewError(..)
+                                                , BrewFormula(..)
+                                                , ErrorOrFormula
+                                                , ErrorOrFormulas
+                                                )
+import           System.Exit                    ( ExitCode(..) )
 import           System.Process.Typed           ( proc
                                                 , readProcess
                                                 )
-import           Data.List.Safe
+import           Data.List.Safe                 ( safeHead )
 
 type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 
-type ErrorOrFormulas = Either BrewError [BrewFormula]
+-- upgrade and return upgraded all formulas
+upgradeAllFormulas :: IO ErrorOrFormulas
+upgradeAllFormulas =
+  putStrLn "executing brew upgrade..." >> execBrewUpgrade >> listFormulas
 
 -- list installed homebrew formulas
 listFormulas :: IO ErrorOrFormulas
 listFormulas = processListResult <$> execBrewList
 
+-- load formula info for the given formula
+getFormulaInfo :: BrewFormula -> IO ErrorOrFormula
+getFormulaInfo formula = processInfoResult <$> (execBrewInfo . formulaName $ formula)
+
+-- load usage info for the given formula
+getFormulaUsage :: BrewFormula -> IO ErrorOrFormula
+getFormulaUsage formula =
+  fmap (\deps -> formula { formulaDependants = deps }) <$> listDependants formula
+
 -- list dependants of the given formula
 listDependants :: BrewFormula -> IO ErrorOrFormulas
-listDependants formula = processListResult <$> (execBrewUses . name $ formula)
+listDependants formula = processListResult <$> (execBrewUses . formulaName $ formula)
 
 -- list dependencies of the given formula
 listDependencies :: BrewFormula -> IO ErrorOrFormulas
-listDependencies formula = processInfoResult <$> (execBrewInfo . name $ formula)
+listDependencies formula =
+  fmap formulaDependencies
+    <$> (processInfoResult <$> (execBrewInfo . formulaName $ formula))
+
+-- uninstall formula
+uninstallFormula :: BrewFormula -> IO ErrorOrFormula
+uninstallFormula formula = do
+  putStrLn
+    . concat
+    $ ["Uninstalling formula '", C8.unpack . formulaName $ formula, "'..."]
+  result <- execBrewUninstall . formulaName $ formula
+  case result of
+    (ExitFailure code, _, err) -> return $ Left (BrewError code err)
+    (ExitSuccess     , _, _  ) -> return $ Right formula
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
 execBrewList = readProcess "brew list"
 
+-- execute "brew upgrade"
+execBrewUpgrade :: IO ReadProcessResult
+execBrewUpgrade = readProcess $ proc "brew" ["upgrade"]
+
 -- execute "brew uses --installed" for the given formula
 execBrewUses :: B.ByteString -> IO ReadProcessResult
-execBrewUses formula = readProcess $ proc "brew" ["uses", "--installed", C8.unpack formula]
+execBrewUses formula =
+  readProcess $ proc "brew" ["uses", "--installed", C8.unpack formula]
 
 -- execute "brew info" for the given formula
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
 execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
 
+-- execute "brew uninstall 'formula-name'"
+execBrewUninstall :: B.ByteString -> IO ReadProcessResult
+execBrewUninstall formula = readProcess $ proc "brew" ["uninstall", C8.unpack formula]
+
 -- process results of a brew command that returns a list of formulas
 processListResult :: ReadProcessResult -> ErrorOrFormulas
-processListResult (ExitFailure code, _, err) = Left $ BrewError code err
-processListResult (ExitSuccess, out, _) = Right $ map (\s -> BrewFormula s [] []) (C8.words out)
+processListResult (ExitFailure cd, _, err) = Left $ BrewError cd err
+processListResult (ExitSuccess, out, _) =
+  Right $ map (\name -> BrewFormula name Nothing [] []) (C8.words out)
 
 -- process results of a brew info command
-processInfoResult :: ReadProcessResult -> ErrorOrFormulas
-processInfoResult (ExitFailure code, _  , err) = Left $ BrewError code err
-processInfoResult (ExitSuccess     , out, _  ) = Right formulas where
-  formulas     = map (\dependency -> BrewFormula dependency [] []) dependencies
-  dependencies = case safeHead . safeTail . dropWhile (/= "==> Dependencies") . C8.lines $ out of
-    Nothing   -> []
-    Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line
+processInfoResult :: ReadProcessResult -> ErrorOrFormula
+processInfoResult (ExitFailure code, _  , err) = Left (BrewError code err)
+processInfoResult (ExitSuccess     , out, _  ) = Right formula where
+  formula      = BrewFormula name info dependencies []
+  name         = C8.takeWhile (/= ':') out
+  info         = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
+  dependencies = map
+    (\dependency -> BrewFormula dependency Nothing [] [])
+    (case safeHead . dropWhile (/= "Required: ") $ rest of
+      Nothing   -> []
+      Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line
+    )
+  (infoLines, rest) =
+    span (\line -> "==>" /= (take 3 . C8.unpack $ line)) . C8.lines $ out

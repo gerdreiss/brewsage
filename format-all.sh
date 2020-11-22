@@ -1,0 +1,1 @@
+find src/**/ -name "*.hs" -depth -exec brittany --write-mode=inplace {} \;

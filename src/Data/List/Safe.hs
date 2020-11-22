@@ -1,4 +1,8 @@
-module Data.List.Safe where
+module Data.List.Safe
+  ( safeHead
+  , safeTail
+  )
+where
 
 safeHead :: [a] -> Maybe a
 safeHead []      = Nothing

@@ -1,45 +1,52 @@
 module Control.Brew.Usage
-  ( listFormulasWithDependants
+  ( listFormulas
+  , listFormulasComplete
+  , getCompleteFormulaInfo
   )
 where
 
-import           Control.Brew.Commands
+import qualified Control.Brew.Commands         as C
+
 import           Control.Concurrent.ParallelIO  ( parallel )
-import           Data.Brew
-import qualified Data.ByteString.Lazy          as B
-import qualified Data.ByteString.Lazy.Char8    as C8
-import           System.Exit
-import           System.Process.Typed           ( proc
-                                                , readProcess
+import           Data.Brew                      ( ErrorOrFormulas
+                                                , BrewFormula(..)
+                                                , ErrorOrFormula
                                                 )
 
 --
 --
+-- list all formulas
+listFormulas :: IO [ErrorOrFormula]
+listFormulas = C.listFormulas >>= procErrorOrFormulas False
+
+--
+--
 -- list all formulas with respective usages
-listFormulasWithDependants :: IO [Either BrewError BrewFormula]
-listFormulasWithDependants = listFormulas >>= procErrorOrFormulas
+listFormulasComplete :: IO [ErrorOrFormula]
+listFormulasComplete = C.listFormulas >>= procErrorOrFormulas True
+
+--
+--
+-- get full info for the given formula
+getCompleteFormulaInfo :: BrewFormula -> IO ErrorOrFormula
+getCompleteFormulaInfo formula = do
+  i <- C.getFormulaInfo formula
+  u <- C.getFormulaUsage formula
+  return $ procErrorOrFormulaCompleteWithUsage i u
 
 -- process error or retrieve usage for the given formulas
-procErrorOrFormulas :: Either BrewError [BrewFormula] -> IO [Either BrewError BrewFormula]
-procErrorOrFormulas (Right formulas) = parallel $ map readFormulaUsage formulas
-procErrorOrFormulas (Left  error   ) = return [Left error]
-
---
---
--- get dependants of and assign them to the given formula
-readFormulaUsage :: BrewFormula -> IO (Either BrewError BrewFormula)
-readFormulaUsage formula = do
-  usage <- listDependants formula
-  deps  <- listDependencies formula
-  return $ procErrorOrFormulaUsage formula usage deps
+procErrorOrFormulas :: Bool -> ErrorOrFormulas -> IO [ErrorOrFormula]
+procErrorOrFormulas complete (Right formulas) = if complete
+  then parallel $ map getCompleteFormulaInfo formulas
+  else return $ map Right formulas
+procErrorOrFormulas _        (Left  err     ) = return [Left err]
 
 -- process error or assign retrieved dependent formulas to the given formula
-procErrorOrFormulaUsage
-  :: BrewFormula                      -- the formula
-  -> Either BrewError [BrewFormula]   -- the dependants
-  -> Either BrewError [BrewFormula]   -- the dependencies
-  -> Either BrewError BrewFormula     -- the formula including the dependants and the dependencies
-procErrorOrFormulaUsage formula (Right dependants) (Right dependencies) =
-  Right $ formula { dependants = dependants, dependencies = dependencies }
-procErrorOrFormulaUsage _ (Left error) _            = Left error
-procErrorOrFormulaUsage _ _            (Left error) = Left error
+procErrorOrFormulaCompleteWithUsage
+  :: ErrorOrFormula    -- the formula with info
+  -> ErrorOrFormula    -- the formula with dependants
+  -> ErrorOrFormula    -- the formula including the dependants and the dependencies
+procErrorOrFormulaCompleteWithUsage (Right formula) (Right dpns) =
+  Right $ formula { formulaDependants = formulaDependants dpns }
+procErrorOrFormulaCompleteWithUsage (Left err) _          = Left err
+procErrorOrFormulaCompleteWithUsage _          (Left err) = Left err

@@ -4,17 +4,14 @@ module Control.Brew.Maintenance
   )
 where
 
-import           Data.Brew
-import           Data.ByteString.Lazy.Char8     ( unpack )
-import           Data.List                      ( intercalate )
-import           System.Exit                    ( ExitCode(..)
-                                                , exitSuccess
+import           Control.Brew.Commands          ( uninstallFormula )
+import           Data.Brew                      ( Answer(..)
+                                                , BrewFormula(..)
                                                 )
+import           Data.ByteString.Lazy.Char8     ( unpack )
+import           System.Exit                    ( exitSuccess )
 import           System.IO                      ( hFlush
                                                 , stdout
-                                                )
-import           System.Process.Typed           ( proc
-                                                , readProcess
                                                 )
 
 --
@@ -28,7 +25,7 @@ procFormulas formulas = do
 --
 procFormula :: BrewFormula -> IO ()
 procFormula formula
-  | not . null . dependants $ formula = print formula
+  | not . null . formulaDependants $ formula = print formula
   | otherwise = do
     answer <- askDeleteFormula formula
     case answer of
@@ -47,7 +44,7 @@ askDeleteFormula formula = do
 -- delete the given formula
 deleteFormula :: BrewFormula -> IO ()
 deleteFormula formula = do
-  input <- readProcess $ proc "brew" ["uninstall", unpack . name $ formula]
+  input <- uninstallFormula formula
   case input of
-    (ExitSuccess  , out, _  ) -> print out
-    (ExitFailure _, _  , err) -> print err
+    Right f -> print $ (unpack . formulaName $ f) ++ " uninstalled"
+    Left  e -> print e
