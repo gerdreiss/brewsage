@@ -68,7 +68,7 @@ uninstallFormula formula = do
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
-execBrewList = readProcess "brew list"
+execBrewList = readProcess $ proc "brew" ["ls", "--formula"]
 
 -- execute "brew upgrade"
 execBrewUpgrade :: IO ReadProcessResult
