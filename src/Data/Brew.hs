@@ -13,19 +13,24 @@ import           Data.Char                      ( isLetter
 import           Data.List                      ( intercalate )
 
 type ErrorOrFormulas = Either BrewError [BrewFormula]
+
 type ErrorOrFormula = Either BrewError BrewFormula
 
-data BrewFormula = BrewFormula
-  { formulaName :: B.ByteString,
-    formulaInfo :: Maybe B.ByteString,
-    formulaDependencies :: [BrewFormula],
-    formulaDependants :: [BrewFormula]
-  }
+data BrewFormula =
+  BrewFormula
+    { formulaName         :: B.ByteString
+    , formulaVersion      :: Maybe B.ByteString
+    , formulaInfo         :: Maybe B.ByteString
+    , formulaDependencies :: [BrewFormula]
+    , formulaDependants   :: [BrewFormula]
+    }
 
 instance Show BrewFormula where
   show formula = concat
     [ "\n"
-    , C8.unpack . formulaName $ formula
+    , name
+    , " "
+    , version
     , "\n"
     , "==> Info"
     , "\n"
@@ -41,6 +46,8 @@ instance Show BrewFormula where
     , "\n"
     ]
    where
+    name           = C8.unpack $ formulaName formula
+    version        = maybe "" (("v" ++) . C8.unpack) . formulaVersion $ formula
     info           = maybe "N/A" C8.unpack . formulaInfo $ formula
     dependencyList = case formulaDependencies formula of
       []       -> "N/A"
@@ -50,13 +57,15 @@ instance Show BrewFormula where
       formulas -> formulaNames formulas
     formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
 
-instance Eq BrewFormula  where
+instance Eq BrewFormula where
   f1 == f2 = formulaName f1 == formulaName f2
 
-data BrewError = BrewError
-  { errorCode :: Int,
-    errorMessage :: B.ByteString
-  } deriving (Eq)
+data BrewError =
+  BrewError
+    { errorCode    :: Int
+    , errorMessage :: B.ByteString
+    }
+  deriving (Eq)
 
 instance Show BrewError where
   show err = concat
@@ -68,7 +77,6 @@ instance Show BrewError where
 
 -- instance Eq BrewError where
 --   e1 == e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
-
 data Answer
   = Yes
   | No
@@ -89,6 +97,7 @@ instance Read Answer where
 
 emptyFormula :: BrewFormula
 emptyFormula = BrewFormula { formulaName         = ""
+                           , formulaVersion      = Nothing
                            , formulaInfo         = Nothing
                            , formulaDependencies = []
                            , formulaDependants   = []

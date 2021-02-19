@@ -51,6 +51,7 @@ import           Data.Brew                      ( BrewError(..)
                                                 )
 import           Tui.State                      ( FormulaInfoState(..) )
 import           Tui.Types                      ( RName(..) )
+import           Data.Maybe                     ( fromMaybe )
 
 makeLenses ''FormulaInfoState
 
@@ -85,8 +86,17 @@ formulas nfs fs =
       ]
 
 drawFormula :: Bool -> BrewFormula -> Widget RName
-drawFormula isSelected = padRight Max . str . prefix . C8.unpack . formulaName
-  where prefix = ((if isSelected then " * " else "   ") ++)
+drawFormula isSelected formula =
+  padRight Max
+    . str
+    . selectedPrefix
+    . C8.unpack
+    . C8.concat
+    $ [formulaName formula, fromMaybe C8.empty version]
+ where
+  selectedPrefix = ((if isSelected then " * " else "   ") ++)
+  version        = versionPrefix <$> formulaVersion formula
+  versionPrefix v = C8.concat [C8.pack "v", v]
 
 selected :: Maybe BrewFormula -> Widget RName
 selected maybeSelected =

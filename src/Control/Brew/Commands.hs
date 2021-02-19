@@ -68,7 +68,7 @@ uninstallFormula formula = do
 
 -- execute "brew list"
 execBrewList :: IO ReadProcessResult
-execBrewList = readProcess $ proc "brew" ["ls", "--formula"]
+execBrewList = readProcess $ proc "brew" ["list", "--formula"]
 
 -- execute "brew upgrade"
 execBrewUpgrade :: IO ReadProcessResult
@@ -91,17 +91,18 @@ execBrewUninstall formula = readProcess $ proc "brew" ["uninstall", C8.unpack fo
 processListResult :: ReadProcessResult -> ErrorOrFormulas
 processListResult (ExitFailure cd, _, err) = Left $ BrewError cd err
 processListResult (ExitSuccess, out, _) =
-  Right $ map (\name -> BrewFormula name Nothing [] []) (C8.words out)
+  Right $ map (\name -> BrewFormula name Nothing Nothing [] []) (C8.words out)
 
 -- process results of a brew info command
 processInfoResult :: ReadProcessResult -> ErrorOrFormula
 processInfoResult (ExitFailure code, _  , err) = Left (BrewError code err)
 processInfoResult (ExitSuccess     , out, _  ) = Right formula where
-  formula      = BrewFormula name info dependencies []
-  name         = C8.takeWhile (/= ':') out
+  formula      = BrewFormula name version info dependencies []
+  name         = C8.takeWhile (/= ':') . head $ C8.words out
+  version      = Just $ C8.words out !! 2
   info         = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
   dependencies = map
-    (\dependency -> BrewFormula dependency Nothing [] [])
+    (\dependency -> BrewFormula dependency Nothing Nothing [] [])
     (case safeHead . dropWhile (/= "Required: ") $ rest of
       Nothing   -> []
       Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line
