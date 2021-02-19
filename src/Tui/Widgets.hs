@@ -96,7 +96,7 @@ drawFormula isSelected formula =
  where
   selectedPrefix = ((if isSelected then " * " else "   ") ++)
   version        = versionPrefix <$> formulaVersion formula
-  versionPrefix v = C8.concat [C8.pack "v", v]
+  versionPrefix v = C8.concat [C8.pack " v", v]
 
 selected :: Maybe BrewFormula -> Widget RName
 selected maybeSelected =
