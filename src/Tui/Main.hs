@@ -217,8 +217,12 @@ upgradeAll s = suspendAndResume $ do
   case upgraded of
     Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
     Right formulas -> return s
-      { stateStatus          = "Formulas upgraded: "
-                                 ++ (C8.unpack . C8.intercalate ", " . map formulaName $ formulas)
+      { stateStatus          = "Formulas upgraded:\n\t - "
+                                 ++ ( C8.unpack
+                                    . C8.intercalate "\n\t - "
+                                    . map formulaName
+                                    $ formulas
+                                    )
       , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
       , stateSelectedFormula = Nothing
       }
