@@ -5,29 +5,27 @@ module Tui.Widgets
   , selected
   , help
   , status
-  )
-where
+  ) where
 
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
 import qualified Brick.Widgets.Center          as C
 import qualified Data.ByteString.Lazy.Char8    as C8
 
-import           Lens.Micro.TH                  ( makeLenses )
 import           Brick                          ( Padding(Pad) )
 import           Brick.Forms                    ( (@@=)
+                                                , Form
                                                 , editTextField
                                                 , newForm
                                                 , renderForm
-                                                , Form
                                                 )
-import           Brick.Types                    ( ViewportType(Vertical)
-                                                , Padding(Max)
+import           Brick.Types                    ( Padding(Max)
+                                                , ViewportType(Vertical)
                                                 , Widget
                                                 )
 import           Brick.Widgets.Core             ( (<+>)
-                                                , hBox
                                                 , fill
+                                                , hBox
                                                 , hLimit
                                                 , padBottom
                                                 , padLeft
@@ -49,11 +47,12 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
 import           Data.Brew                      ( BrewError(..)
                                                 , BrewFormula(..)
                                                 )
-import           Tui.State                      ( FormulaInfoState(..) )
-import           Tui.Types                      ( RName(..) )
 import           Data.Maybe                     ( fromMaybe )
+import           Tui.State                      ( FormulaInfoState
+                                                , formulaInfoName
+                                                )
+import           Tui.Types                      ( RName(..) )
 
-makeLenses ''FormulaInfoState
 
 title :: String -> Widget RName
 title t =
@@ -197,10 +196,12 @@ help =
     $ [ padRight Max
         . vBox
         $ [ str "   ENTER : Display selected"
+          , str "   f     : Filter formula"
           , str "   s     : Search formula"
           , str "   i     : Install new"
           , str "   u     : Uninstall selected"
           , str "   U     : Update all"
+          , str "   h     : Display usage"
           , str "   q     : Exit"
           ]
       ]
@@ -209,7 +210,7 @@ leftWidth :: Int
 leftWidth = 30
 
 bottomHeight :: Int
-bottomHeight = 6
+bottomHeight = 8
 
 formulaEditForm :: FormulaInfoState -> Widget RName
 formulaEditForm info =
@@ -218,10 +219,10 @@ formulaEditForm info =
 formulaEdit :: FormulaInfoState -> Form FormulaInfoState e RName
 formulaEdit =
   let label s w =
-          padLeft (Pad 1)
-            $   padTop (Pad 1)
-            $   padBottom (Pad 1)
-            $   vLimit 1 (hLimit 15 $ str s <+> fill ' ')
-            <+> w
+        padLeft (Pad 1)
+          $   padTop (Pad 1)
+          $   padBottom (Pad 1)
+          $   vLimit 1 (hLimit 15 $ str s <+> fill ' ')
+          <+> w
   in  newForm
         [label "Formula Name" @@= editTextField formulaInfoName FormulaInfo (Just 1)]

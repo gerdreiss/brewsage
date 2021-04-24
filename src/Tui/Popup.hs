@@ -8,18 +8,17 @@ module Tui.Popup
   , handlePopupEvent
   , popupSelection
   , minPopupWidth
-  )
-where
+  ) where
 
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Center          as C
 import qualified Brick.Widgets.Dialog          as D
 import qualified Graphics.Vty                  as VTY
 
-import           Brick                          ( vLimit
-                                                , padAll
+import           Brick                          ( padAll
                                                 , str
                                                 , vBox
+                                                , vLimit
                                                 )
 import           Brick.Types                    ( EventM
                                                 , Widget

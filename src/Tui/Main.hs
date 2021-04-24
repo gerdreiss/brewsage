@@ -1,7 +1,6 @@
 module Tui.Main
   ( tui
-  )
-where
+  ) where
 
 import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
@@ -9,47 +8,39 @@ import qualified Tui.Popup                     as P
 import qualified Tui.Widgets                   as W
 
 import           Brick.AttrMap                  ( attrMap )
-import           Brick.Main                     ( suspendAndResume
-                                                , ViewportScroll
-                                                , viewportScroll
-                                                , vScrollBy
+import           Brick.Main                     ( App(..)
                                                 , continue
                                                 , defaultMain
                                                 , halt
                                                 , showFirstCursor
-                                                , App(..)
+                                                , suspendAndResume
+                                                , vScrollBy
+                                                , viewportScroll
                                                 )
-import           Brick.Types                    ( Widget
-                                                , BrickEvent(VtyEvent)
-                                                , EventM
+import           Brick.Types                    ( BrickEvent(VtyEvent)
+                                                , Widget
                                                 )
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
-import           Control.Brew.Commands          ( uninstallFormula
+import           Control.Brew.Commands          ( listFormulas
+                                                , uninstallFormula
                                                 , upgradeAllFormulas
-                                                , listFormulas
                                                 )
 import           Control.Brew.Usage             ( getCompleteFormulaInfo )
-import           Control.Monad                  ( (>=>) )
 import           Control.Monad.IO.Class         ( liftIO )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
+                                                , makeNonEmptyCursor
+                                                , nonEmptyCursorCurrent
                                                 , nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
-                                                , nonEmptyCursorCurrent
-                                                , makeNonEmptyCursor
                                                 )
 import           Data.Brew                      ( BrewFormula(..) )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
-                                                , Key(KEnter, KEsc, KChar, KDown, KUp)
+                                                , Key(KChar, KDown, KEnter, KEsc, KUp)
                                                 )
-import           Tui.State                      ( emptyInstallFormulaInfoState
-                                                , emptySearchFormulaInfoState
-                                                , NewState
-                                                , TuiState(..)
-                                                , buildInitialState
-                                                )
-import           Tui.Types                      ( RName(..) )
+import           Tui.State
+import           Tui.Types
 
 
 type ScrollDir = Int
@@ -105,16 +96,17 @@ ui s =
 -- | handle TUI events
 handleTuiEvent :: TuiState -> BrickEvent n e -> NewState
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
-handleTuiEvent s (VtyEvent (EvKey KUp   _)) = scroll up nonEmptyCursorSelectPrev s
-handleTuiEvent s (VtyEvent (EvKey KEnter _)) =
-  maybe (displayFormula s) (handleDialogEvent s) (statePopup s)
+handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { statePopup = Nothing }
-handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = displayAbout s
-handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = uninstall s
-handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = displaySearch s
-handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = displayInstall s
-handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = upgradeAll s
-handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = halt s
+handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleCharacterEvent s displayFormula
+handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = handleCharacterEvent s displayAbout
+handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = handleCharacterEvent s upgradeAll
+handleTuiEvent s (VtyEvent (EvKey (KChar 'h') _)) = handleCharacterEvent s displayHelp
+handleTuiEvent s (VtyEvent (EvKey (KChar 'f') _)) = handleCharacterEvent s displayFilter
+handleTuiEvent s (VtyEvent (EvKey (KChar 's') _)) = handleCharacterEvent s displaySearch
+handleTuiEvent s (VtyEvent (EvKey (KChar 'i') _)) = handleCharacterEvent s displayInstall
+handleTuiEvent s (VtyEvent (EvKey (KChar 'u') _)) = handleCharacterEvent s uninstall
+handleTuiEvent s (VtyEvent (EvKey (KChar 'q') _)) = handleCharacterEvent s halt
 handleTuiEvent s _ = continue s
 
 -- | scroll viewport
@@ -126,12 +118,8 @@ scroll
 scroll direction scrollF s = case scrollF . stateFormulas $ s of
   Nothing       -> continue s
   Just formulas -> do
-    vScrollBy uiFormulaScroll direction
+    vScrollBy (viewportScroll Formulas) direction
     continue $ s { stateFormulas = formulas }
-
--- | create the scroll view port
-uiFormulaScroll :: ViewportScroll RName
-uiFormulaScroll = viewportScroll Formulas
 
 -- | scroll down constant
 down :: Int
@@ -140,6 +128,10 @@ down = 1
 -- | scroll up constant
 up :: Int
 up = -1
+
+-- | handle character input depending on the popup being displayed or not
+handleCharacterEvent :: TuiState -> (TuiState -> NewState) -> NewState
+handleCharacterEvent s f = maybe (f s) (const $ continue s) (statePopup s)
 
 -- | display the selected formula
 displayFormula :: TuiState -> NewState
@@ -169,41 +161,48 @@ displayAbout s = continue s
                    []
   }
 
--- | Handle the dialog event
-handleDialogEvent :: TuiState -> P.Popup RName (TuiState -> NewState) -> NewState
-handleDialogEvent s _ = displayNotImplemented s
+-- | display the help text
+displayHelp :: TuiState -> NewState
+displayHelp s = continue s
+  { statePopup = Just $ P.popup
+                   "Search formula"
+                   [ "Displaying help is not implemented yet"
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
+  }
+
+-- | display the filter field
+displayFilter :: TuiState -> NewState
+displayFilter s = continue s
+  { statePopup = Just $ P.popup
+                   "Search formula"
+                   [ "Displaying filter is not implemented yet"
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
+  }
 
 -- | display the search dialog
 displaySearch :: TuiState -> NewState
 displaySearch s = continue s
-  { statePopup = Just $ P.popup'
+  { statePopup = Just $ P.popup
                    "Search formula"
-                   (W.formulaEditForm emptySearchFormulaInfoState)
-                   [("OK", execAction >=> continue), ("Cancel", closePopup >=> continue)]
+                   [ "Searching formula information is not implemented yet"
+                   , ""
+                   , "                                          [ESC to close]"
+                   ]
+                   []
   }
 
 -- | display the install dialog
 displayInstall :: TuiState -> NewState
 displayInstall s = continue s
-  { statePopup = Just $ P.popup'
-                   "Install formula"
-                   (W.formulaEditForm emptyInstallFormulaInfoState)
-                   [("OK", execAction >=> continue), ("Cancel", closePopup >=> continue)]
-  }
-
-execAction :: TuiState -> EventM RName TuiState
-execAction s = pure s { statePopup = Nothing }
-
-closePopup :: TuiState -> EventM RName TuiState
-closePopup s = pure s { statePopup = Nothing }
-
--- | display the 'Not implemented' dialog
-displayNotImplemented :: TuiState -> NewState
-displayNotImplemented s = continue s
   { statePopup = Just $ P.popup
-                   "Not implemented"
-                   [ "This feature is not yet implemented"
-                   , ""
+                   "Install formula"
+                   [ "Installing new formula is not implemented yet"
                    , ""
                    , "                                          [ESC to close]"
                    ]

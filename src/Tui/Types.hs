@@ -1,6 +1,5 @@
 module Tui.Types
   ( RName(..)
-  )
-where
+  ) where
 
-data RName = Formulas | FormulaInfo deriving (Eq, Ord, Show)
+data RName = Formulas | FormulaInfo | FormulaName deriving (Eq, Ord, Show)
