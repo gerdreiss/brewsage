@@ -49,10 +49,9 @@ import           Data.Brew                      ( BrewError(..)
                                                 )
 import           Data.Maybe                     ( fromMaybe )
 import           Tui.State                      ( FormulaInfoState
+                                                , RName(..)
                                                 , formulaInfoName
                                                 )
-import           Tui.Types                      ( RName(..) )
-
 
 title :: String -> Widget RName
 title t =

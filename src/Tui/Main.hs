@@ -39,8 +39,8 @@ import           Data.Brew                      ( BrewFormula(..) )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
                                                 , Key(KChar, KDown, KEnter, KEsc, KUp)
                                                 )
+import           Lens.Micro
 import           Tui.State
-import           Tui.Types
 
 
 type ScrollDir = Int
@@ -51,7 +51,7 @@ type ScrollF = NonEmptyCursor BrewFormula -> Maybe (NonEmptyCursor BrewFormula)
 -- | display the TUI
 tui :: [BrewFormula] -> IO ()
 tui fs = buildInitialState fs >>= defaultMain tuiApp >>= printExitStatus
-  where printExitStatus = print . maybe "Exited with success" show . stateError
+  where printExitStatus = print . maybe "Exited with success" show . _stateError
 
 -- | create the application state
 tuiApp :: App TuiState e RName
@@ -64,18 +64,18 @@ tuiApp = App { appDraw         = drawTui
 
 -- | draw the TUI
 drawTui :: TuiState -> [Widget RName]
-drawTui s = maybe [ui s] (\p -> [P.renderPopup p, ui s]) (statePopup s)
+drawTui s = maybe [ui s] (\p -> [P.renderPopup p, ui s]) (s ^. statePopup)
 
 -- | create the TUI widget
 ui :: TuiState -> Widget RName
 ui s =
   let
-    t   = stateTitle s
-    fs  = stateFormulas s
-    nfs = stateNumberFormulas s
-    sel = stateSelectedFormula s
-    st  = stateStatus s
-    err = stateError s
+    t   = _stateTitle s
+    fs  = _stateFormulas s
+    nfs = _stateNumberFormulas s
+    sel = _stateSelectedFormula s
+    st  = _stateStatus s
+    err = _stateError s
   in
     vBox
       [ W.title t
@@ -97,7 +97,7 @@ ui s =
 handleTuiEvent :: TuiState -> BrickEvent n e -> NewState
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
-handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { statePopup = Nothing }
+handleTuiEvent s (VtyEvent (EvKey KEsc _)) = continue s { _statePopup = Nothing }
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleCharacterEvent s displayFormula
 handleTuiEvent s (VtyEvent (EvKey (KChar 'a') _)) = handleCharacterEvent s displayAbout
 handleTuiEvent s (VtyEvent (EvKey (KChar 'U') _)) = handleCharacterEvent s upgradeAll
@@ -115,11 +115,11 @@ scroll
   -> ScrollF                            -- function to select the next/previous formula
   -> TuiState                           -- the TUI state
   -> NewState
-scroll direction scrollF s = case scrollF . stateFormulas $ s of
+scroll direction scrollF s = case scrollF . _stateFormulas $ s of
   Nothing       -> continue s
   Just formulas -> do
     vScrollBy (viewportScroll Formulas) direction
-    continue $ s { stateFormulas = formulas }
+    continue $ s { _stateFormulas = formulas }
 
 -- | scroll down constant
 down :: Int
@@ -131,82 +131,82 @@ up = -1
 
 -- | handle character input depending on the popup being displayed or not
 handleCharacterEvent :: TuiState -> (TuiState -> NewState) -> NewState
-handleCharacterEvent s f = maybe (f s) (const $ continue s) (statePopup s)
+handleCharacterEvent s f = maybe (f s) (const $ continue s) (_statePopup s)
 
 -- | display the selected formula
 displayFormula :: TuiState -> NewState
 displayFormula s = do
-  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . stateFormulas $ s
+  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . _stateFormulas $ s
   case selected of
-    Left  err     -> halt s { stateStatus = "Error occurred", stateError = Just err }
+    Left  err     -> halt s { _stateStatus = "Error occurred", _stateError = Just err }
     Right formula -> continue s
-      { stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
-      , stateSelectedFormula = Just formula
+      { _stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
+      , _stateSelectedFormula = Just formula
       }
 
 -- | display the 'About' dialog
 displayAbout :: TuiState -> NewState
 displayAbout s = continue s
-  { statePopup = Just $ P.popup
-                   "About"
-                   [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
-                   , "Powered by Brick (https://github.com/jtdaugherty/brick)"
-                   , "Written in Haskell (https://www.haskell.org/)"
-                   , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
-                   , "Copyright (c) 2020, Gerd Reiss"
-                   , ""
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
+  { _statePopup = Just $ P.popup
+                    "About"
+                    [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
+                    , "Powered by Brick (https://github.com/jtdaugherty/brick)"
+                    , "Written in Haskell (https://www.haskell.org/)"
+                    , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
+                    , "Copyright (c) 2020, Gerd Reiss"
+                    , ""
+                    , ""
+                    , "                                          [ESC to close]"
+                    ]
+                    []
   }
 
 -- | display the help text
 displayHelp :: TuiState -> NewState
 displayHelp s = continue s
-  { statePopup = Just $ P.popup
-                   "Search formula"
-                   [ "Displaying help is not implemented yet"
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
+  { _statePopup = Just $ P.popup
+                    "Search formula"
+                    [ "Displaying help is not implemented yet"
+                    , ""
+                    , "                                          [ESC to close]"
+                    ]
+                    []
   }
 
 -- | display the filter field
 displayFilter :: TuiState -> NewState
 displayFilter s = continue s
-  { statePopup = Just $ P.popup
-                   "Search formula"
-                   [ "Displaying filter is not implemented yet"
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
+  { _statePopup = Just $ P.popup
+                    "Search formula"
+                    [ "Displaying filter is not implemented yet"
+                    , ""
+                    , "                                          [ESC to close]"
+                    ]
+                    []
   }
 
 -- | display the search dialog
 displaySearch :: TuiState -> NewState
 displaySearch s = continue s
-  { statePopup = Just $ P.popup
-                   "Search formula"
-                   [ "Searching formula information is not implemented yet"
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
+  { _statePopup = Just $ P.popup
+                    "Search formula"
+                    [ "Searching formula information is not implemented yet"
+                    , ""
+                    , "                                          [ESC to close]"
+                    ]
+                    []
   }
 
 -- | display the install dialog
 displayInstall :: TuiState -> NewState
 displayInstall s = continue s
-  { statePopup = Just $ P.popup
-                   "Install formula"
-                   [ "Installing new formula is not implemented yet"
-                   , ""
-                   , "                                          [ESC to close]"
-                   ]
-                   []
+  { _statePopup = Just $ P.popup
+                    "Install formula"
+                    [ "Installing new formula is not implemented yet"
+                    , ""
+                    , "                                          [ESC to close]"
+                    ]
+                    []
   }
 
 -- | upgrade all formulas
@@ -214,30 +214,30 @@ upgradeAll :: TuiState -> NewState
 upgradeAll s = suspendAndResume $ do
   upgraded <- upgradeAllFormulas
   case upgraded of
-    Left  err      -> return s { stateStatus = "Error occurred", stateError = Just err }
+    Left  err      -> return s { _stateStatus = "Error occurred", _stateError = Just err }
     Right formulas -> return s
-      { stateStatus          = "Formulas upgraded:\n\t - "
-                                 ++ ( C8.unpack
-                                    . C8.intercalate "\n\t - "
-                                    . map formulaName
-                                    $ formulas
-                                    )
-      , stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
-      , stateSelectedFormula = Nothing
+      { _stateFormulas        = makeNonEmptyCursor $ NE.fromList formulas
+      , _stateSelectedFormula = Nothing
+      , _stateStatus          = "Formulas upgraded:\n\t - "
+                                  ++ ( C8.unpack
+                                     . C8.intercalate "\n\t - "
+                                     . map formulaName
+                                     $ formulas
+                                     )
       }
 
 -- | uninstall the selected formula
 uninstall :: TuiState -> NewState
 uninstall s = suspendAndResume $ do
-  let maybeFormula = stateSelectedFormula s
+  let maybeFormula = _stateSelectedFormula s
   case maybeFormula of
-    Nothing      -> return s { stateStatus = "Select a formula before deleting" }
+    Nothing      -> return s { _stateStatus = "Select a formula before deleting" }
     Just formula -> do
       formulas <- uninstallFormula formula >> listFormulas
       case formulas of
-        Left  err -> return s { stateStatus = "Error occurred", stateError = Just err }
+        Left  err -> return s { _stateStatus = "Error occurred", _stateError = Just err }
         Right fs  -> return s
-          { stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
-          , stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
-          , stateSelectedFormula = Nothing
+          { _stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
+          , _stateSelectedFormula = Nothing
+          , _stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
           }

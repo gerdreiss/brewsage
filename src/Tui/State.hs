@@ -14,19 +14,23 @@ import           Data.Brew                      ( BrewError
                                                 )
 import           Lens.Micro.TH                  ( makeLenses )
 import           Tui.Popup                      ( Popup )
-import           Tui.Types
+
+data RName = Formulas | FormulaInfo | FormulaName deriving (Eq, Ord, Show)
+
+data FormulaOp =  FormulaList | FormulaFilter | FormulaSearch | FormulaInstall
 
 type NewState = B.EventM RName (B.Next TuiState)
 
 data TuiState = TuiState
-  { stateTitle           :: String
-  , stateFormulas        :: NonEmptyCursor BrewFormula
-  , stateNumberFormulas  :: Int
-  , stateSelectedFormula :: Maybe BrewFormula
-  , stateStatus          :: String
-  , stateError           :: Maybe BrewError
-  , statePopup           :: Maybe (Popup RName (TuiState -> NewState))
-  , stateFormulaName     :: E.Editor String RName
+  { _stateTitle           :: String
+  , _stateFormulas        :: NonEmptyCursor BrewFormula
+  , _stateNumberFormulas  :: Int
+  , _stateSelectedFormula :: Maybe BrewFormula
+  , _stateStatus          :: String
+  , _stateError           :: Maybe BrewError
+  , _statePopup           :: Maybe (Popup RName (TuiState -> NewState))
+  , _stateFormulaNameOp   :: FormulaOp
+  , _stateFormulaName     :: E.Editor String RName
   }
 
 data FormulaInfoState = FormState
@@ -40,6 +44,7 @@ data FormulaAction
   | SearchFormula
   deriving (Eq, Ord, Show)
 
+makeLenses ''TuiState
 makeLenses ''FormulaInfoState
 
 
@@ -48,26 +53,31 @@ buildInitialState fs = do
   let maybeFormulas = NE.nonEmpty fs
   case maybeFormulas of
     Nothing -> pure emptyState
-    Just ne -> pure TuiState { stateTitle           = "Brewsage"
-                             , stateFormulas        = makeNonEmptyCursor ne
-                             , stateNumberFormulas  = length ne
-                             , stateSelectedFormula = Nothing
-                             , stateStatus          = "Ready"
-                             , stateError           = Nothing
-                             , statePopup           = Nothing
-                             , stateFormulaName     = E.editor FormulaName Nothing ""
+    Just ne -> pure TuiState { _stateTitle           = "Brewsage"
+                             , _stateFormulas        = makeNonEmptyCursor ne
+                             , _stateNumberFormulas  = length ne
+                             , _stateSelectedFormula = Nothing
+                             , _stateStatus          = "Ready"
+                             , _stateError           = Nothing
+                             , _statePopup           = Nothing
+                             , _stateFormulaNameOp   = FormulaList
+                             , _stateFormulaName     = emptyEditor
                              }
 
 emptyState :: TuiState
-emptyState = TuiState { stateTitle           = "Brewsage"
-                      , stateFormulas        = emptyFormulaList
-                      , stateNumberFormulas  = 0
-                      , stateSelectedFormula = Nothing
-                      , stateStatus          = "No installed formulas found"
-                      , stateError           = Nothing
-                      , statePopup           = Nothing
-                      , stateFormulaName     = E.editor FormulaName Nothing ""
+emptyState = TuiState { _stateTitle           = "Brewsage"
+                      , _stateFormulas        = emptyFormulaList
+                      , _stateNumberFormulas  = 0
+                      , _stateSelectedFormula = Nothing
+                      , _stateStatus          = "No installed formulas found"
+                      , _stateError           = Nothing
+                      , _statePopup           = Nothing
+                      , _stateFormulaNameOp   = FormulaList
+                      , _stateFormulaName     = emptyEditor
                       }
+
+emptyEditor :: E.Editor String RName
+emptyEditor = E.editor FormulaName Nothing ""
 
 emptyInstallFormulaInfoState :: FormulaInfoState
 emptyInstallFormulaInfoState =
