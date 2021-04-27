@@ -13,17 +13,15 @@ import           Data.Char                      ( isLetter
 import           Data.List                      ( intercalate )
 
 type ErrorOrFormulas = Either BrewError [BrewFormula]
-
 type ErrorOrFormula = Either BrewError BrewFormula
 
-data BrewFormula =
-  BrewFormula
-    { formulaName         :: B.ByteString
-    , formulaVersion      :: Maybe B.ByteString
-    , formulaInfo         :: Maybe B.ByteString
-    , formulaDependencies :: [BrewFormula]
-    , formulaDependants   :: [BrewFormula]
-    }
+data BrewFormula = BrewFormula
+  { formulaName         :: B.ByteString
+  , formulaVersion      :: Maybe B.ByteString
+  , formulaInfo         :: Maybe B.ByteString
+  , formulaDependencies :: [BrewFormula]
+  , formulaDependants   :: [BrewFormula]
+  }
 
 instance Show BrewFormula where
   show formula = concat
@@ -60,23 +58,16 @@ instance Show BrewFormula where
 instance Eq BrewFormula where
   f1 == f2 = formulaName f1 == formulaName f2
 
-data BrewError =
-  BrewError
-    { errorCode    :: Int
-    , errorMessage :: B.ByteString
-    }
-  deriving (Eq)
+data BrewError = BrewError
+  { errorCode    :: Int
+  , errorMessage :: B.ByteString
+  }
+  deriving Eq
 
 instance Show BrewError where
-  show err = concat
-    [ "Error occurred: code "
-    , show . errorCode $ err
-    , " message "
-    , show . errorMessage $ err
-    ]
+  show err =
+    concat ["Error occurred: ", show (errorCode err), " - ", C8.unpack (errorMessage err)]
 
--- instance Eq BrewError where
---   e1 == e2 = errorCode e1 == errorCode e2 && errorMessage e1 == errorMessage e2
 data Answer
   = Yes
   | No
@@ -105,3 +96,6 @@ emptyFormula = BrewFormula { formulaName         = ""
 
 emptyFormulaList :: NonEmptyCursor BrewFormula
 emptyFormulaList = makeNonEmptyCursor $ NE.fromList [emptyFormula]
+
+mkFormula :: String -> BrewFormula
+mkFormula name = emptyFormula { formulaName = C8.pack name }

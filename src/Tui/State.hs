@@ -12,12 +12,15 @@ import           Data.Brew                      ( BrewError
                                                 , BrewFormula(..)
                                                 , emptyFormulaList
                                                 )
+import           Lens.Micro                     ( Lens'
+                                                , lens
+                                                )
 import           Lens.Micro.TH                  ( makeLenses )
 import           Tui.Popup                      ( Popup )
 
 data RName = Formulas | FormulaInfo | FormulaName deriving (Eq, Ord, Show)
 
-data FormulaOp =  FormulaList | FormulaFilter | FormulaSearch | FormulaInstall
+data FormulaOp =  FormulaList | FormulaFilter | FormulaSearch | FormulaInstall deriving Eq
 
 type NewState = B.EventM RName (B.Next TuiState)
 
@@ -29,8 +32,8 @@ data TuiState = TuiState
   , _stateStatus          :: String
   , _stateError           :: Maybe BrewError
   , _statePopup           :: Maybe (Popup RName (TuiState -> NewState))
+  , _stateFormulaNameEdit :: E.Editor String RName
   , _stateFormulaNameOp   :: FormulaOp
-  , _stateFormulaName     :: E.Editor String RName
   }
 
 data FormulaInfoState = FormState
@@ -44,9 +47,14 @@ data FormulaAction
   | SearchFormula
   deriving (Eq, Ord, Show)
 
+instance Show FormulaOp where
+  show FormulaList    = ""
+  show FormulaFilter  = "Filter"
+  show FormulaSearch  = "Search formula"
+  show FormulaInstall = "Install formula"
+
 makeLenses ''TuiState
 makeLenses ''FormulaInfoState
-
 
 buildInitialState :: [BrewFormula] -> IO TuiState
 buildInitialState fs = do
@@ -60,8 +68,8 @@ buildInitialState fs = do
                              , _stateStatus          = "Ready"
                              , _stateError           = Nothing
                              , _statePopup           = Nothing
+                             , _stateFormulaNameEdit = emptyEditor
                              , _stateFormulaNameOp   = FormulaList
-                             , _stateFormulaName     = emptyEditor
                              }
 
 emptyState :: TuiState
@@ -72,8 +80,8 @@ emptyState = TuiState { _stateTitle           = "Brewsage"
                       , _stateStatus          = "No installed formulas found"
                       , _stateError           = Nothing
                       , _statePopup           = Nothing
+                      , _stateFormulaNameEdit = emptyEditor
                       , _stateFormulaNameOp   = FormulaList
-                      , _stateFormulaName     = emptyEditor
                       }
 
 emptyEditor :: E.Editor String RName
@@ -86,3 +94,10 @@ emptyInstallFormulaInfoState =
 emptySearchFormulaInfoState :: FormulaInfoState
 emptySearchFormulaInfoState =
   FormState { _formulaInfoName = T.empty, _formulaInfoAction = SearchFormula }
+
+stateFormulaNameEditL :: Lens' TuiState (E.Editor String RName)
+stateFormulaNameEditL =
+  lens _stateFormulaNameEdit (\state edit -> state { _stateFormulaNameEdit = edit })
+
+stateFormulaNameOpL :: Lens' TuiState FormulaOp
+stateFormulaNameOpL = lens _stateFormulaNameOp (\s f -> s { _stateFormulaNameOp = f })
