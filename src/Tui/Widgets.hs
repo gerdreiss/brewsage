@@ -102,7 +102,7 @@ mainArea s =
   C.vCenter
     . C.hCenter
     . vBox
-    $ [maybe selectFormulaText displaySelected selectedFormula, drawFormulaInput s]
+    $ [maybe selectFormulaText displayFormulaInfo selectedFormula, drawFormulaInput s]
  where
   selectFormulaText =
     padLeft (Pad 3)
@@ -110,11 +110,9 @@ mainArea s =
       . padBottom Max
       . strWrap
       $ "select a formula by pushing ENTER to display it here with its dependants and dependencies"
+  displayFormulaInfo formula =
+    vBox [displayInfo formula, displayDependencies formula, displayDependants formula]
   selectedFormula = s ^. stateSelectedFormula
-
-displaySelected :: BrewFormula -> Widget RName
-displaySelected formula =
-  vBox [displayInfo formula, displayDependencies formula, displayDependants formula]
 
 displayInfo :: BrewFormula -> Widget RName
 displayInfo formula =
@@ -134,48 +132,46 @@ displayInfo formula =
 --
 --
 displayDependencies :: BrewFormula -> Widget RName
-displayDependencies formula =
-  B.border
-    . vLimit 3
-    . C.vCenter
-    . C.hCenter
-    . hBox
-    $ [ padLeft (Pad 3)
-        . padTop (Pad 1)
-        . padBottom Max
-        $ case formulaDependencies formula of
-            [] -> strWrap "Does not depend on any other formula"
-            ds ->
-              strWrap
-                . ("Depends on " ++)
-                . C8.unpack
-                . C8.intercalate (C8.pack ", ")
-                . map formulaName
-                $ ds
-      ]
+displayDependencies formula = case formulaDependencies formula of
+  [] -> emptyWidget
+  ds ->
+    B.border
+      . vLimit 3
+      . C.vCenter
+      . C.hCenter
+      . hBox
+      $ [ padLeft (Pad 3)
+          . padTop (Pad 1)
+          . padBottom Max
+          $ strWrap
+          . ("Depends on " ++)
+          . C8.unpack
+          . C8.intercalate (C8.pack ", ")
+          . map formulaName
+          $ ds
+        ]
 
 --
 --
 displayDependants :: BrewFormula -> Widget RName
-displayDependants formula =
-  B.border
-    . vLimit 3
-    . C.vCenter
-    . C.hCenter
-    . hBox
-    $ [ padLeft (Pad 3)
-        . padTop (Pad 1)
-        . padBottom Max
-        $ case formulaDependants formula of
-            [] -> strWrap "Not required by any other formula"
-            ds ->
-              strWrap
-                . ("Required by " ++)
-                . C8.unpack
-                . C8.intercalate (C8.pack ", ")
-                . map formulaName
-                $ ds
-      ]
+displayDependants formula = case formulaDependants formula of
+  [] -> emptyWidget
+  ds ->
+    B.border
+      . vLimit 3
+      . C.vCenter
+      . C.hCenter
+      . hBox
+      $ [ padLeft (Pad 3)
+          . padTop (Pad 1)
+          . padBottom Max
+          $ strWrap
+          . ("Required by " ++)
+          . C8.unpack
+          . C8.intercalate (C8.pack ", ")
+          . map formulaName
+          $ ds
+        ]
 
 --
 --

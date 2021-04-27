@@ -2,15 +2,14 @@ module Control.Brew.Usage
   ( listFormulas
   , listFormulasComplete
   , getCompleteFormulaInfo
-  )
-where
+  ) where
 
 import qualified Control.Brew.Commands         as C
 
 import           Control.Concurrent.ParallelIO  ( parallel )
-import           Data.Brew                      ( ErrorOrFormulas
-                                                , BrewFormula(..)
+import           Data.Brew                      ( BrewFormula(..)
                                                 , ErrorOrFormula
+                                                , ErrorOrFormulas
                                                 )
 
 --
@@ -30,7 +29,7 @@ listFormulasComplete = C.listFormulas >>= procErrorOrFormulas True
 -- get full info for the given formula
 getCompleteFormulaInfo :: BrewFormula -> IO ErrorOrFormula
 getCompleteFormulaInfo formula = do
-  i <- C.getFormulaInfo formula
+  i <- C.getFormulaInfo False formula
   u <- C.getFormulaUsage formula
   return $ procErrorOrFormulaCompleteWithUsage i u
 

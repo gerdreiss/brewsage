@@ -25,7 +25,8 @@ import           Brick.Types                    ( BrickEvent(VtyEvent)
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
-import           Control.Brew.Commands          ( listFormulas
+import           Control.Brew.Commands          ( getFormulaInfo
+                                                , listFormulas
                                                 , uninstallFormula
                                                 , upgradeAllFormulas
                                                 )
@@ -185,7 +186,7 @@ displayFormula s = do
 -- | search and display formula info
 searchDisplayFormula :: String -> TuiState -> NewState
 searchDisplayFormula name s = do
-  info <- liftIO $ getCompleteFormulaInfo $ mkFormula name
+  info <- liftIO $ getFormulaInfo True $ mkFormula name
   case info of
     Left  err     -> continue s { _stateStatus          = "Error occurred"
                                 , _stateError           = Just err
@@ -193,7 +194,7 @@ searchDisplayFormula name s = do
                                 , _stateFormulaNameEdit = emptyEditor
                                 }
     Right formula -> continue s
-      { _stateStatus          = (++ " displayed") . C8.unpack . formulaName $ formula
+      { _stateStatus          = (++ " found") . C8.unpack . formulaName $ formula
       , _stateSelectedFormula = Just formula
       , _stateFormulaNameOp   = FormulaList
       , _stateFormulaNameEdit = emptyEditor
@@ -234,11 +235,13 @@ displayFilter s = continue s { _stateFormulaNameOp = FormulaFilter }
 
 -- | display the search dialog
 displaySearch :: TuiState -> NewState
-displaySearch s = continue s { _stateFormulaNameOp = FormulaSearch }
+displaySearch s =
+  continue s { _stateFormulaNameOp = FormulaSearch, _stateSelectedFormula = Nothing }
 
 -- | display the install dialog
 displayInstall :: TuiState -> NewState
-displayInstall s = continue s { _stateFormulaNameOp = FormulaInstall }
+displayInstall s =
+  continue s { _stateFormulaNameOp = FormulaInstall, _stateSelectedFormula = Nothing }
 
 -- | upgrade all formulas
 upgradeAll :: TuiState -> NewState
