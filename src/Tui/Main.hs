@@ -107,7 +107,6 @@ handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayFormula
 handleTuiEvent s (VtyEvent ev@(EvKey KDel _)) = handleChrEvent ev s displayFormula
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'a') _)) = handleChrEvent ev s displayAbout
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'U') _)) = handleChrEvent ev s upgradeAll
-handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'h') _)) = handleChrEvent ev s displayHelp
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'f') _)) = handleChrEvent ev s displayFilter
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 's') _)) = handleChrEvent ev s displaySearch
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'i') _)) = handleChrEvent ev s displayInstall
@@ -212,18 +211,6 @@ displayAbout s = continue s
                     , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
                     , "Copyright (c) 2020, Gerd Reiss"
                     , ""
-                    , ""
-                    , "                                          [ESC to close]"
-                    ]
-                    []
-  }
-
--- | display the help text
-displayHelp :: TuiState -> NewState
-displayHelp s = continue s
-  { _statePopup = Just $ P.popup
-                    "Search formula"
-                    [ "Displaying help is not implemented yet"
                     , ""
                     , "                                          [ESC to close]"
                     ]

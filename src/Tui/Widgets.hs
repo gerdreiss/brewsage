@@ -210,7 +210,6 @@ help =
           , str "   i     : Install new"
           , str "   u     : Uninstall selected"
           , str "   U     : Update all"
-          , str "   h     : Display usage"
           , str "   q     : Exit"
           ]
       ]
@@ -240,4 +239,4 @@ leftWidth :: Int
 leftWidth = 30
 
 bottomHeight :: Int
-bottomHeight = 8
+bottomHeight = 7

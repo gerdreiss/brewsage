@@ -18,11 +18,25 @@ import           Lens.Micro                     ( Lens'
 import           Lens.Micro.TH                  ( makeLenses )
 import           Tui.Popup                      ( Popup )
 
-data RName = Formulas | FormulaInfo | FormulaName deriving (Eq, Ord, Show)
-
-data FormulaOp =  FormulaList | FormulaFilter | FormulaSearch | FormulaInstall deriving Eq
-
 type NewState = B.EventM RName (B.Next TuiState)
+
+data RName
+  = Formulas
+  | FormulaInfo
+  | FormulaName
+  deriving (Eq, Ord, Show)
+
+data FormulaOp
+  = FormulaList
+  | FormulaFilter
+  | FormulaSearch
+  | FormulaInstall
+  deriving (Eq)
+
+data FormulaAction
+  = InstallFormula
+  | SearchFormula
+  deriving (Eq, Ord, Show)
 
 data TuiState = TuiState
   { _stateTitle           :: String
@@ -41,11 +55,6 @@ data FormulaInfoState = FormState
   , _formulaInfoAction :: !FormulaAction
   }
   deriving Show
-
-data FormulaAction
-  = InstallFormula
-  | SearchFormula
-  deriving (Eq, Ord, Show)
 
 instance Show FormulaOp where
   show FormulaList    = ""
@@ -100,4 +109,5 @@ stateFormulaNameEditL =
   lens _stateFormulaNameEdit (\state edit -> state { _stateFormulaNameEdit = edit })
 
 stateFormulaNameOpL :: Lens' TuiState FormulaOp
-stateFormulaNameOpL = lens _stateFormulaNameOp (\s f -> s { _stateFormulaNameOp = f })
+stateFormulaNameOpL =
+  lens _stateFormulaNameOp (\state op -> state { _stateFormulaNameOp = op })
