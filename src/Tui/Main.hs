@@ -26,6 +26,7 @@ import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
 import           Control.Brew.Commands          ( getFormulaInfo
+                                                , installFormula
                                                 , listFormulas
                                                 , uninstallFormula
                                                 , upgradeAllFormulas
@@ -151,7 +152,7 @@ handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup
     case s ^. stateFormulaNameOp of
       FormulaList    -> f s
       FormulaSearch  -> searchDisplayFormula name s
-      FormulaInstall -> continue s
+      FormulaInstall -> install name s
       FormulaFilter  -> continue s
 
 -- | handle character input depending on the popup being displayed or not
@@ -259,6 +260,19 @@ upgradeAll s = suspendAndResume $ do
                                      $ formulas
                                      )
       }
+
+-- | install formula
+install :: String -> TuiState -> NewState
+install formula s = suspendAndResume $ do
+  formulas <- installFormula (mkFormula formula) >> listFormulas
+  case formulas of
+    Left  err -> return s { _stateStatus = "Error occurred", _stateError = Just err }
+    Right fs  -> return s { _stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
+                          , _stateSelectedFormula = Nothing
+                          , _stateStatus          = formula ++ " uninstalled"
+                          , _stateFormulaNameOp   = FormulaList
+                          , _stateFormulaNameEdit = emptyEditor
+                          }
 
 -- | uninstall the selected formula
 uninstall :: TuiState -> NewState

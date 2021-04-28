@@ -6,6 +6,7 @@ module Control.Brew.Commands
   , listFormulas
   , listDependants
   , listDependencies
+  , installFormula
   , uninstallFormula
   , upgradeAllFormulas
   ) where
@@ -55,6 +56,15 @@ listDependencies full formula =
   fmap formulaDependencies
     <$> (processInfoResult full <$> (execBrewInfo . formulaName $ formula))
 
+-- install formula
+installFormula :: BrewFormula -> IO ErrorOrFormula
+installFormula formula = do
+  putStrLn . concat $ ["Installing formula '", C8.unpack . formulaName $ formula, "'..."]
+  result <- execBrewInstall . formulaName $ formula
+  case result of
+    (ExitFailure code, _, err) -> return $ Left (BrewError code err)
+    (ExitSuccess     , _, _  ) -> return $ Right formula
+
 -- uninstall formula
 uninstallFormula :: BrewFormula -> IO ErrorOrFormula
 uninstallFormula formula = do
@@ -82,6 +92,10 @@ execBrewUses formula =
 -- execute "brew info" for the given formula
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
 execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
+
+-- execute "brew install 'formula-name'"
+execBrewInstall :: B.ByteString -> IO ReadProcessResult
+execBrewInstall formula = readProcess $ proc "brew" ["install", C8.unpack formula]
 
 -- execute "brew uninstall 'formula-name'"
 execBrewUninstall :: B.ByteString -> IO ReadProcessResult
