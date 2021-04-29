@@ -23,7 +23,6 @@ type NewState = B.EventM RName (B.Next TuiState)
 
 data RName
   = Formulas
-  | FormulaInfo
   | FormulaName
   deriving (Eq, Ord, Show)
 
@@ -34,10 +33,6 @@ data FormulaOp
   | FormulaInstall
   deriving (Eq)
 
-data FormulaAction
-  = InstallFormula
-  | SearchFormula
-  deriving (Eq, Ord, Show)
 
 data TuiState = TuiState
   { _stateTitle           :: String
@@ -51,12 +46,6 @@ data TuiState = TuiState
   , _stateFormulaNameOp   :: FormulaOp
   }
 
-data FormulaInfoState = FormState
-  { _formulaInfoName   :: !T.Text
-  , _formulaInfoAction :: !FormulaAction
-  }
-  deriving Show
-
 instance Show FormulaOp where
   show FormulaList    = ""
   show FormulaJumpTo  = "Jump to"
@@ -64,7 +53,6 @@ instance Show FormulaOp where
   show FormulaInstall = "Install formula"
 
 makeLenses ''TuiState
-makeLenses ''FormulaInfoState
 
 buildInitialState :: [BrewFormula] -> IO TuiState
 buildInitialState fs = do
@@ -96,14 +84,6 @@ emptyState = TuiState { _stateTitle           = "Brewsage"
 
 emptyEditor :: E.Editor String RName
 emptyEditor = E.editor FormulaName Nothing ""
-
-emptyInstallFormulaInfoState :: FormulaInfoState
-emptyInstallFormulaInfoState =
-  FormState { _formulaInfoName = T.empty, _formulaInfoAction = InstallFormula }
-
-emptySearchFormulaInfoState :: FormulaInfoState
-emptySearchFormulaInfoState =
-  FormState { _formulaInfoName = T.empty, _formulaInfoAction = SearchFormula }
 
 stateFormulaNameEditL :: Lens' TuiState (E.Editor String RName)
 stateFormulaNameEditL =

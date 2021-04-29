@@ -3,6 +3,7 @@ module Tui.Main
   ) where
 
 import qualified Brick.Widgets.Edit            as E
+import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
 import qualified Tui.Popup                     as P
@@ -48,7 +49,6 @@ import           Graphics.Vty.Input.Events      ( Event(EvKey)
 import           Lens.Micro                     ( (^.) )
 
 import           Data.Brew
-import           Data.List                      ( isPrefixOf )
 import           Data.Maybe                     ( fromMaybe )
 import           Tui.State
 
@@ -99,7 +99,7 @@ handleTuiEvent :: TuiState -> BrickEvent n e -> NewState
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = handleEscEvent s
-handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayFormula
+handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayWithDeps
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar '/') _)) = handleChrEvent ev s displayJumpTo
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 's') _)) = handleChrEvent ev s displaySearch
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'i') _)) = handleChrEvent ev s displayInstall
@@ -146,7 +146,7 @@ handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup
     let name = getEditedFormulaName s
     case s ^. stateFormulaNameOp of
       FormulaList    -> f s
-      FormulaSearch  -> searchDisplayFormula name s
+      FormulaSearch  -> displayFullInfo name s
       FormulaInstall -> install name s
       FormulaJumpTo  -> f s { _stateFormulas = selectFormula name (s ^. stateFormulas) }
 
@@ -155,7 +155,7 @@ selectFormula name fs = fromMaybe fs (nonEmptyCursorSelectIndex idx fs)
  where
   idx   = maybe 0 nonEmptyCursorSelection found
   found = nonEmptyCursorSearch prefix fs
-  prefix formula = name `isPrefixOf` C8.unpack (formulaName formula)
+  prefix formula = C8.pack name `B.isPrefixOf` formulaName formula
 
 -- | handle character input depending on the popup being displayed or not
 handleChrEvent :: Event -> TuiState -> (TuiState -> NewState) -> NewState
@@ -178,8 +178,8 @@ handleOtherKeys ev s = maybe
   (s ^. statePopup)
 
 -- | display the selected formula
-displayFormula :: TuiState -> NewState
-displayFormula s = do
+displayWithDeps :: TuiState -> NewState
+displayWithDeps s = do
   selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . _stateFormulas $ s
   case selected of
     Left err -> continue s { _stateStatus = "Error occurred", _stateError = Just err }
@@ -189,8 +189,8 @@ displayFormula s = do
       }
 
 -- | search and display formula info
-searchDisplayFormula :: String -> TuiState -> NewState
-searchDisplayFormula name s = do
+displayFullInfo :: String -> TuiState -> NewState
+displayFullInfo name s = do
   info <- liftIO $ getFormulaInfo True $ mkFormula name
   case info of
     Left  err     -> continue s { _stateStatus          = "Error occurred"
@@ -226,7 +226,7 @@ displayAbout s = continue s
 displayJumpTo :: TuiState -> NewState
 displayJumpTo s = continue s { _stateFormulaNameOp = FormulaJumpTo }
 
--- | display the search dialog
+-- | display the search field
 displaySearch :: TuiState -> NewState
 displaySearch s = continue s { _stateFormulaNameOp   = FormulaSearch
                              , _stateSelectedFormula = Nothing

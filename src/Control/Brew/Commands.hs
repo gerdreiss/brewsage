@@ -3,6 +3,7 @@
 module Control.Brew.Commands
   ( getFormulaInfo
   , getFormulaUsage
+  , getFormulaDeps
   , listFormulas
   , listDependants
   , listDependencies
@@ -19,7 +20,6 @@ import           Data.Brew                      ( BrewError(..)
                                                 , ErrorOrFormula
                                                 , ErrorOrFormulas
                                                 )
-import           Data.List.Safe                 ( safeHead )
 import           System.Exit                    ( ExitCode(..) )
 import           System.Process.Typed           ( proc
                                                 , readProcess
@@ -46,15 +46,17 @@ getFormulaUsage :: BrewFormula -> IO ErrorOrFormula
 getFormulaUsage formula =
   fmap (\deps -> formula { formulaDependants = deps }) <$> listDependants formula
 
+getFormulaDeps :: BrewFormula -> IO ErrorOrFormula
+getFormulaDeps formula =
+  fmap (\deps -> formula { formulaDependencies = deps }) <$> listDependencies formula
+
 -- list dependants of the given formula
 listDependants :: BrewFormula -> IO ErrorOrFormulas
 listDependants formula = processListResult <$> (execBrewUses . formulaName $ formula)
 
 -- list dependencies of the given formula
-listDependencies :: Bool -> BrewFormula -> IO ErrorOrFormulas
-listDependencies full formula =
-  fmap formulaDependencies
-    <$> (processInfoResult full <$> (execBrewInfo . formulaName $ formula))
+listDependencies :: BrewFormula -> IO ErrorOrFormulas
+listDependencies formula = processListResult <$> (execBrewDeps . formulaName $ formula)
 
 -- install formula
 installFormula :: BrewFormula -> IO ErrorOrFormula
@@ -89,6 +91,10 @@ execBrewUses :: B.ByteString -> IO ReadProcessResult
 execBrewUses formula =
   readProcess $ proc "brew" ["uses", "--installed", C8.unpack formula]
 
+-- execute "brew deps" for the given formula
+execBrewDeps :: B.ByteString -> IO ReadProcessResult
+execBrewDeps formula = readProcess $ proc "brew" ["deps", C8.unpack formula]
+
 -- execute "brew info" for the given formula
 execBrewInfo :: B.ByteString -> IO ReadProcessResult
 execBrewInfo formula = readProcess $ proc "brew" ["info", C8.unpack formula]
@@ -114,16 +120,9 @@ processListResult (ExitSuccess   , out, _  ) = Right
 processInfoResult :: Bool -> ReadProcessResult -> ErrorOrFormula
 processInfoResult _    (ExitFailure code, _  , err) = Left (BrewError code err)
 processInfoResult full (ExitSuccess     , out, _  ) = Right formula where
-  formula           = BrewFormula name version info dependencies []
-  name              = C8.takeWhile (/= ':') . head $ C8.words out
-  version           = Just $ C8.words out !! 2
-  info = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
-  dependencies      = map
-    (\dependency -> BrewFormula dependency Nothing Nothing [] [])
-    (case safeHead . dropWhile (/= "Required: ") $ rest of
-      Nothing   -> []
-      Just line -> map (C8.takeWhile (/= ',')) . C8.words . C8.dropWhile (/= ' ') $ line
-    )
-  (infoLines, rest) = if full
-    then (C8.lines out, [C8.empty])
-    else span (\line -> "==>" /= (take 3 . C8.unpack $ line)) . C8.lines $ out
+  formula = BrewFormula name version info [] []
+  name    = C8.takeWhile (/= ':') out
+  version = Just $ C8.words out !! 2
+  info    = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
+  infoLines =
+    if full then C8.lines out else takeWhile (not . B.isPrefixOf "==>") $ C8.lines out

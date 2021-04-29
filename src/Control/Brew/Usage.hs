@@ -29,9 +29,11 @@ listFormulasComplete = C.listFormulas >>= procErrorOrFormulas True
 -- get full info for the given formula
 getCompleteFormulaInfo :: BrewFormula -> IO ErrorOrFormula
 getCompleteFormulaInfo formula = do
+  -- TODO execute the three calls below in parallel
   i <- C.getFormulaInfo False formula
   u <- C.getFormulaUsage formula
-  return $ procErrorOrFormulaCompleteWithUsage i u
+  d <- C.getFormulaDeps formula
+  return $ procErrorOrFormulaCompleteWithUsageAndDeps i u d
 
 -- process error or retrieve usage for the given formulas
 procErrorOrFormulas :: Bool -> ErrorOrFormulas -> IO [ErrorOrFormula]
@@ -41,11 +43,15 @@ procErrorOrFormulas complete (Right formulas) = if complete
 procErrorOrFormulas _        (Left  err     ) = return [Left err]
 
 -- process error or assign retrieved dependent formulas to the given formula
-procErrorOrFormulaCompleteWithUsage
+procErrorOrFormulaCompleteWithUsageAndDeps
   :: ErrorOrFormula    -- the formula with info
   -> ErrorOrFormula    -- the formula with dependants
+  -> ErrorOrFormula    -- the formula with dependencies
   -> ErrorOrFormula    -- the formula including the dependants and the dependencies
-procErrorOrFormulaCompleteWithUsage (Right formula) (Right dpns) =
-  Right $ formula { formulaDependants = formulaDependants dpns }
-procErrorOrFormulaCompleteWithUsage (Left err) _          = Left err
-procErrorOrFormulaCompleteWithUsage _          (Left err) = Left err
+procErrorOrFormulaCompleteWithUsageAndDeps (Right formula) (Right dpns) (Right deps) =
+  Right $ formula { formulaDependants   = formulaDependants dpns
+                  , formulaDependencies = formulaDependencies deps
+                  }
+procErrorOrFormulaCompleteWithUsageAndDeps (Left err) _          _          = Left err
+procErrorOrFormulaCompleteWithUsageAndDeps _          (Left err) _          = Left err
+procErrorOrFormulaCompleteWithUsageAndDeps _          _          (Left err) = Left err
