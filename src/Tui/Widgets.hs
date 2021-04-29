@@ -31,9 +31,13 @@ import           Brick                          ( (<+>)
                                                 , viewport
                                                 , withBorderStyle
                                                 )
-import           Cursor.Simple.List.NonEmpty    ( nonEmptyCursorCurrent
+import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
+                                                , nonEmptyCursorCurrent
                                                 , nonEmptyCursorNext
                                                 , nonEmptyCursorPrev
+                                                , nonEmptyCursorSearch
+                                                , nonEmptyCursorSelectIndex
+                                                , nonEmptyCursorSelection
                                                 )
 import           Data.Brew                      ( BrewFormula
                                                   ( formulaDependants
@@ -43,6 +47,7 @@ import           Data.Brew                      ( BrewFormula
                                                   , formulaVersion
                                                   )
                                                 )
+import           Data.List                      ( isPrefixOf )
 import           Data.Maybe                     ( fromMaybe )
 import           Lens.Micro                     ( (^.) )
 import           Tui.State
@@ -62,12 +67,15 @@ title t =
 --
 --
 formulas :: TuiState -> Widget RName
-formulas s =
+formulas s = do
+  let
+    fs =
+      formulaNames (s ^. stateFormulas) (s ^. stateFormulaNameOp) (getEditedFormulaName s)
   withBorderStyle BS.unicodeBold
     . B.border
     . hLimit leftWidth
     . vBox
-    $ [ drawFormulaFilter s
+    $ [ drawFormulaJumpTo s
       , viewport Formulas Vertical
       . vBox
       $ [ padTopBottom 1
@@ -75,12 +83,22 @@ formulas s =
           . vLimit (s ^. stateNumberFormulas)
           . vBox
           . concat
-          $ [ drawFormula False <$> (reverse . nonEmptyCursorPrev . _stateFormulas $ s)
-            , drawFormula True <$> [nonEmptyCursorCurrent . _stateFormulas $ s]
-            , drawFormula False <$> (nonEmptyCursorNext . _stateFormulas $ s)
+          $ [ drawFormula False <$> (reverse . nonEmptyCursorPrev $ fs)
+            , drawFormula True <$> [nonEmptyCursorCurrent fs]
+            , drawFormula False <$> nonEmptyCursorNext fs
             ]
         ]
       ]
+
+formulaNames
+  :: NonEmptyCursor BrewFormula -> FormulaOp -> String -> NonEmptyCursor BrewFormula
+formulaNames fs FormulaJumpTo []   = fs
+formulaNames fs FormulaJumpTo name = selectFormula fs name
+formulaNames fs _             _    = fs
+
+selectFormula :: NonEmptyCursor BrewFormula -> String -> NonEmptyCursor BrewFormula
+selectFormula fs name = fromMaybe fs (nonEmptyCursorSearch prefix fs)
+  where prefix formula = name `isPrefixOf` C8.unpack (formulaName formula)
 
 drawFormula :: Bool -> BrewFormula -> Widget RName
 drawFormula isSelected formula =
@@ -205,7 +223,7 @@ help =
     $ [ padRight Max
         . vBox
         $ [ str "   ENTER : Display selected"
-          , str "   f     : Filter formula"
+          , str "   /     : Jump to formula"
           , str "   s     : Search formula"
           , str "   i     : Install new"
           , str "   u     : Uninstall selected"
@@ -214,9 +232,9 @@ help =
           ]
       ]
 
-drawFormulaFilter :: TuiState -> Widget RName
-drawFormulaFilter s =
-  if _stateFormulaNameOp s == FormulaFilter then drawFormulaNameEdit s else emptyWidget
+drawFormulaJumpTo :: TuiState -> Widget RName
+drawFormulaJumpTo s =
+  if _stateFormulaNameOp s == FormulaJumpTo then drawFormulaNameEdit s else emptyWidget
 
 drawFormulaInput :: TuiState -> Widget RName
 drawFormulaInput s = if s ^. stateFormulaNameOp `elem` [FormulaSearch, FormulaInstall]

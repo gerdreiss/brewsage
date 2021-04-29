@@ -36,24 +36,20 @@ import           Control.Monad.IO.Class         ( liftIO )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , makeNonEmptyCursor
                                                 , nonEmptyCursorCurrent
+                                                , nonEmptyCursorSearch
+                                                , nonEmptyCursorSelectIndex
                                                 , nonEmptyCursorSelectNext
                                                 , nonEmptyCursorSelectPrev
+                                                , nonEmptyCursorSelection
                                                 )
-import           Data.Brew                      ( BrewFormula(..)
-                                                , mkFormula
-                                                )
-import           Data.Char                      ( toLower )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
-                                                , Key
-                                                  ( KChar
-                                                  , KDel
-                                                  , KDown
-                                                  , KEnter
-                                                  , KEsc
-                                                  , KUp
-                                                  )
+                                                , Key(KChar, KDown, KEnter, KEsc, KUp)
                                                 )
 import           Lens.Micro                     ( (^.) )
+
+import           Data.Brew
+import           Data.List                      ( isPrefixOf )
+import           Data.Maybe                     ( fromMaybe )
 import           Tui.State
 
 
@@ -104,13 +100,12 @@ handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNe
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = handleEscEvent s
 handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayFormula
-handleTuiEvent s (VtyEvent ev@(EvKey KDel _)) = handleChrEvent ev s displayFormula
-handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'a') _)) = handleChrEvent ev s displayAbout
-handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'U') _)) = handleChrEvent ev s upgradeAll
-handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'f') _)) = handleChrEvent ev s displayFilter
+handleTuiEvent s (VtyEvent ev@(EvKey (KChar '/') _)) = handleChrEvent ev s displayJumpTo
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 's') _)) = handleChrEvent ev s displaySearch
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'i') _)) = handleChrEvent ev s displayInstall
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'u') _)) = handleChrEvent ev s uninstall
+handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'U') _)) = handleChrEvent ev s upgradeAll
+handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'a') _)) = handleChrEvent ev s displayAbout
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'q') _)) = handleChrEvent ev s halt
 handleTuiEvent s (VtyEvent ev@(EvKey _ _)) = handleOtherKeys ev s
 handleTuiEvent s _ = continue s
@@ -140,6 +135,7 @@ handleEscEvent :: TuiState -> NewState
 handleEscEvent s = continue s { _statePopup           = Nothing
                               , _stateFormulaNameOp   = FormulaList
                               , _stateFormulaNameEdit = emptyEditor
+                              , _stateStatus          = "Ready"
                               }
 
 -- | handle the enter
@@ -147,20 +143,29 @@ handleEnterEvent :: TuiState -> (TuiState -> NewState) -> NewState
 handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup)
  where
   execFormulaOp = do
-    let name = map toLower $ unwords $ E.getEditContents $ s ^. stateFormulaNameEdit
+    let name = getEditedFormulaName s
     case s ^. stateFormulaNameOp of
       FormulaList    -> f s
       FormulaSearch  -> searchDisplayFormula name s
       FormulaInstall -> install name s
-      FormulaFilter  -> continue s
+      FormulaJumpTo  -> f s { _stateFormulas = selectFormula name (s ^. stateFormulas) }
+
+selectFormula :: String -> NonEmptyCursor BrewFormula -> NonEmptyCursor BrewFormula
+selectFormula name fs = fromMaybe fs (nonEmptyCursorSelectIndex idx fs)
+ where
+  idx   = maybe 0 nonEmptyCursorSelection found
+  found = nonEmptyCursorSearch prefix fs
+  prefix formula = name `isPrefixOf` C8.unpack (formulaName formula)
 
 -- | handle character input depending on the popup being displayed or not
 handleChrEvent :: Event -> TuiState -> (TuiState -> NewState) -> NewState
-handleChrEvent ev s f = maybe
-  (if s ^. stateFormulaNameOp == FormulaList then f s else handleEditor s ev)
-  (const $ continue s)
-  (s ^. statePopup)
+handleChrEvent ev s f = maybe handleEditorChrEvent (const $ continue s) (s ^. statePopup)
+ where
+  handleEditorChrEvent = case s ^. stateFormulaNameOp of
+    FormulaList -> f s
+    _           -> handleEditor s ev
 
+-- | handle events in editor
 handleEditor :: TuiState -> Event -> NewState
 handleEditor state event =
   continue =<< handleEventLensed state stateFormulaNameEditL E.handleEditorEvent event
@@ -217,19 +222,23 @@ displayAbout s = continue s
                     []
   }
 
--- | display the filter field
-displayFilter :: TuiState -> NewState
-displayFilter s = continue s { _stateFormulaNameOp = FormulaFilter }
+-- | display the jump to formula field
+displayJumpTo :: TuiState -> NewState
+displayJumpTo s = continue s { _stateFormulaNameOp = FormulaJumpTo }
 
 -- | display the search dialog
 displaySearch :: TuiState -> NewState
-displaySearch s =
-  continue s { _stateFormulaNameOp = FormulaSearch, _stateSelectedFormula = Nothing }
+displaySearch s = continue s { _stateFormulaNameOp   = FormulaSearch
+                             , _stateSelectedFormula = Nothing
+                             , _stateStatus          = "Search formula"
+                             }
 
 -- | display the install dialog
 displayInstall :: TuiState -> NewState
-displayInstall s =
-  continue s { _stateFormulaNameOp = FormulaInstall, _stateSelectedFormula = Nothing }
+displayInstall s = continue s { _stateFormulaNameOp   = FormulaInstall
+                              , _stateSelectedFormula = Nothing
+                              , _stateStatus          = "Install formula"
+                              }
 
 -- | upgrade all formulas
 upgradeAll :: TuiState -> NewState

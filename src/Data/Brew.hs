@@ -12,8 +12,9 @@ import           Data.Char                      ( isLetter
                                                 )
 import           Data.List                      ( intercalate )
 
-type ErrorOrFormulas = Either BrewError [BrewFormula]
-type ErrorOrFormula = Either BrewError BrewFormula
+--
+-- | brew formula
+--
 
 data BrewFormula = BrewFormula
   { formulaName         :: B.ByteString
@@ -22,6 +23,9 @@ data BrewFormula = BrewFormula
   , formulaDependencies :: [BrewFormula]
   , formulaDependants   :: [BrewFormula]
   }
+
+instance Eq BrewFormula where
+  f1 == f2 = formulaName f1 == formulaName f2
 
 instance Show BrewFormula where
   show formula = concat
@@ -55,8 +59,9 @@ instance Show BrewFormula where
       formulas -> formulaNames formulas
     formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
 
-instance Eq BrewFormula where
-  f1 == f2 = formulaName f1 == formulaName f2
+--
+-- | brew error
+--
 
 data BrewError = BrewError
   { errorCode    :: Int
@@ -67,6 +72,13 @@ data BrewError = BrewError
 instance Show BrewError where
   show err =
     concat ["Error occurred: ", show (errorCode err), " - ", C8.unpack (errorMessage err)]
+
+type ErrorOrFormulas = Either BrewError [BrewFormula]
+type ErrorOrFormula = Either BrewError BrewFormula
+
+--
+-- | answes
+--
 
 data Answer
   = Yes
@@ -85,6 +97,11 @@ instance Read Answer where
     "n"    -> [(No, [])]
     ""     -> [(No, [])]
     _      -> [(Que, [])]
+
+
+--
+-- | helper functions
+--
 
 emptyFormula :: BrewFormula
 emptyFormula = BrewFormula { formulaName         = ""

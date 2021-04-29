@@ -12,6 +12,7 @@ import           Data.Brew                      ( BrewError
                                                 , BrewFormula(..)
                                                 , emptyFormulaList
                                                 )
+import           Data.Char                      ( toLower )
 import           Lens.Micro                     ( Lens'
                                                 , lens
                                                 )
@@ -28,7 +29,7 @@ data RName
 
 data FormulaOp
   = FormulaList
-  | FormulaFilter
+  | FormulaJumpTo
   | FormulaSearch
   | FormulaInstall
   deriving (Eq)
@@ -58,7 +59,7 @@ data FormulaInfoState = FormState
 
 instance Show FormulaOp where
   show FormulaList    = ""
-  show FormulaFilter  = "Filter"
+  show FormulaJumpTo  = "Jump to"
   show FormulaSearch  = "Search formula"
   show FormulaInstall = "Install formula"
 
@@ -111,3 +112,6 @@ stateFormulaNameEditL =
 stateFormulaNameOpL :: Lens' TuiState FormulaOp
 stateFormulaNameOpL =
   lens _stateFormulaNameOp (\state op -> state { _stateFormulaNameOp = op })
+
+getEditedFormulaName :: TuiState -> String
+getEditedFormulaName = map toLower . unwords . E.getEditContents . _stateFormulaNameEdit
