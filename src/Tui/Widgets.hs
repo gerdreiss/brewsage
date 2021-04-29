@@ -36,8 +36,6 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorNext
                                                 , nonEmptyCursorPrev
                                                 , nonEmptyCursorSearch
-                                                , nonEmptyCursorSelectIndex
-                                                , nonEmptyCursorSelection
                                                 )
 import           Data.Brew                      ( BrewFormula
                                                   ( formulaDependants
