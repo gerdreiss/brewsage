@@ -1,8 +1,6 @@
 module Control.Brew.Maintenance
   ( procFormulas
-  , procFormula
-  )
-where
+  ) where
 
 import           Control.Brew.Commands          ( uninstallFormula )
 import           Data.Brew                      ( Answer(..)

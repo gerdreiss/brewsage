@@ -77,7 +77,7 @@ type ErrorOrFormulas = Either BrewError [BrewFormula]
 type ErrorOrFormula = Either BrewError BrewFormula
 
 --
--- | answes
+-- | answers
 --
 
 data Answer

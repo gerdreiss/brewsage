@@ -59,7 +59,7 @@ formulas s = do
   let
     fs =
       formulaNames (s ^. stateFormulas) (s ^. stateFormulaNameOp) (getEditedFormulaName s)
-  withBorderStyle unicodeBold
+   in withBorderStyle unicodeBold
     . border
     . hLimit leftWidth
     . vBox
@@ -80,9 +80,7 @@ formulas s = do
 
 formulaNames
   :: NonEmptyCursor BrewFormula -> FormulaOp -> String -> NonEmptyCursor BrewFormula
-formulaNames fs FormulaJumpTo []   = fs
-formulaNames fs FormulaJumpTo name = selectFormula fs name
-formulaNames fs _             _    = fs
+formulaNames fs op name = if op /= FormulaJumpTo || null name then fs else selectFormula fs name
 
 selectFormula :: NonEmptyCursor BrewFormula -> String -> NonEmptyCursor BrewFormula
 selectFormula fs name = fromMaybe fs (nonEmptyCursorSearch prefix fs)
