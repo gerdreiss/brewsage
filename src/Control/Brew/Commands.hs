@@ -111,7 +111,7 @@ execBrewUninstall formula = readProcess $ proc "brew" ["uninstall", C8.unpack fo
 processListResult :: ReadProcessResult -> ErrorOrFormulas
 processListResult (ExitFailure cd, _  , err) = Left $ BrewError cd err
 processListResult (ExitSuccess   , out, _  ) = Right
-  $ map (\line -> BrewFormula (name line) (version line) Nothing [] []) (C8.lines out)
+  $ fmap (\line -> BrewFormula (name line) (version line) Nothing [] []) (C8.lines out)
  where
   name line = head $ C8.words line
   version line = Just . last $ C8.words line

@@ -29,19 +29,21 @@ listFormulasComplete = C.listFormulas >>= procErrorOrFormulas True
 -- get full info for the given formula
 getCompleteFormulaInfo :: BrewFormula -> IO ErrorOrFormula
 getCompleteFormulaInfo formula = do
-  -- TODO execute the three calls below in parallel
-  i <- C.getFormulaInfo False formula
-  u <- C.getFormulaUsage formula
-  d <- C.getFormulaDeps formula
+  [i, u, d] <- parallel
+    $ fmap ($ formula) [C.getFormulaInfo False, C.getFormulaUsage, C.getFormulaDeps]
   return $ procErrorOrFormulaCompleteWithUsageAndDeps i u d
 
+--
+--
 -- process error or retrieve usage for the given formulas
 procErrorOrFormulas :: Bool -> ErrorOrFormulas -> IO [ErrorOrFormula]
 procErrorOrFormulas complete (Right formulas) = if complete
-  then parallel $ map getCompleteFormulaInfo formulas
-  else return $ map Right formulas
+  then parallel $ fmap getCompleteFormulaInfo formulas
+  else return $ fmap Right formulas
 procErrorOrFormulas _        (Left  err     ) = return [Left err]
 
+--
+--
 -- process error or assign retrieved dependent formulas to the given formula
 procErrorOrFormulaCompleteWithUsageAndDeps
   :: ErrorOrFormula    -- the formula with info

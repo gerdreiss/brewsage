@@ -252,7 +252,7 @@ upgradeAll s = suspendAndResume $ do
       , _stateStatus          = "Formulas upgraded:\n\t - "
                                   ++ ( C8.unpack
                                      . C8.intercalate "\n\t - "
-                                     . map formulaName
+                                     . fmap formulaName
                                      $ formulas
                                      )
       }

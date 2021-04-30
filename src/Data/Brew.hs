@@ -57,7 +57,7 @@ instance Show BrewFormula where
     dependantList  = case formulaDependants formula of
       []       -> "N/A"
       formulas -> formulaNames formulas
-    formulaNames formulas = intercalate ", " (map (C8.unpack . formulaName) formulas)
+    formulaNames formulas = intercalate ", " (fmap (C8.unpack . formulaName) formulas)
 
 --
 -- | brew error
@@ -88,7 +88,7 @@ data Answer
   deriving (Show)
 
 instance Read Answer where
-  readsPrec _ input = case map toLower . filter isLetter $ input of
+  readsPrec _ input = case fmap toLower . filter isLetter $ input of
     "quit" -> [(Quit, [])]
     "q"    -> [(Quit, [])]
     "yes"  -> [(Yes, [])]
