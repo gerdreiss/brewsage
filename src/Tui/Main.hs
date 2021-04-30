@@ -210,9 +210,10 @@ displayAbout :: TuiState -> NewState
 displayAbout s = continue s
   { _statePopup = Just $ P.popup
                     "About"
-                    [ "Brewsage - a TUI for homebrew (https://brew.sh/)"
+                    [ "Brewsage - a TUI for homebrew (https://brew.sh)"
                     , "Powered by Brick (https://github.com/jtdaugherty/brick)"
-                    , "Written in Haskell (https://www.haskell.org/)"
+                    , "Written in Haskell (https://www.haskell.org)"
+                    , "Built by Haskell Stack (https://haskellstack.org)"
                     , "Hosted by GitHub (https://github.com/gerdreiss/brewsage)"
                     , "Copyright (c) 2020, Gerd Reiss"
                     , ""

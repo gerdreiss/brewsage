@@ -54,6 +54,9 @@ procErrorOrFormulaCompleteWithUsageAndDeps (Right formula) (Right dpns) (Right d
   Right $ formula { formulaDependants   = formulaDependants dpns
                   , formulaDependencies = formulaDependencies deps
                   }
-procErrorOrFormulaCompleteWithUsageAndDeps (Left err) _          _          = Left err
-procErrorOrFormulaCompleteWithUsageAndDeps _          (Left err) _          = Left err
-procErrorOrFormulaCompleteWithUsageAndDeps _          _          (Left err) = Left err
+procErrorOrFormulaCompleteWithUsageAndDeps formula dpns deps =
+  -- this looks more dangerous than it is.
+  -- head will never be called because sequence necessarily returns a Left,
+  -- since the case where all elements of the list are Right is covered above.
+  -- it's just a 
+  head <$> sequence [formula, dpns, deps]

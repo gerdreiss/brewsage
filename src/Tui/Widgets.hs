@@ -226,6 +226,7 @@ help =
           , str "   i     : Install new"
           , str "   u     : Uninstall selected"
           , str "   U     : Update all"
+          , str "   a     : About"
           , str "   q     : Exit"
           ]
       ]
@@ -255,4 +256,4 @@ leftWidth :: Int
 leftWidth = 30
 
 bottomHeight :: Int
-bottomHeight = 7
+bottomHeight = 8
