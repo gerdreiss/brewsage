@@ -6,10 +6,6 @@ module Tui.Widgets
   , status
   ) where
 
-import qualified Brick.Widgets.Border          as B
-import qualified Brick.Widgets.Border.Style    as BS
-import qualified Brick.Widgets.Center          as C
-import qualified Brick.Widgets.Edit            as E
 import qualified Data.ByteString.Lazy.Char8    as C8
 
 import           Brick                          ( (<+>)
@@ -31,36 +27,30 @@ import           Brick                          ( (<+>)
                                                 , viewport
                                                 , withBorderStyle
                                                 )
+import           Brick.Widgets.Border           ( border )
+import           Brick.Widgets.Border.Style     ( unicodeBold )
+import           Brick.Widgets.Center           ( hCenter
+                                                , vCenter
+                                                )
+import           Brick.Widgets.Edit             ( renderEditor )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorCurrent
                                                 , nonEmptyCursorNext
                                                 , nonEmptyCursorPrev
                                                 , nonEmptyCursorSearch
                                                 )
-import           Data.Brew                      ( BrewFormula
-                                                  ( formulaDependants
-                                                  , formulaDependencies
-                                                  , formulaInfo
-                                                  , formulaName
-                                                  , formulaVersion
-                                                  )
-                                                )
 import           Data.List                      ( isPrefixOf )
 import           Data.Maybe                     ( fromMaybe )
 import           Lens.Micro                     ( (^.) )
+
+import           Data.Brew
 import           Tui.State
 
 --
 --
 title :: String -> Widget RName
 title t =
-  withBorderStyle BS.unicodeBold
-    . B.border
-    . vLimit 1
-    . C.vCenter
-    . C.hCenter
-    . vBox
-    $ [str t]
+  withBorderStyle unicodeBold . border . vLimit 1 . vCenter . hCenter . vBox $ [str t]
 
 --
 --
@@ -69,8 +59,8 @@ formulas s = do
   let
     fs =
       formulaNames (s ^. stateFormulas) (s ^. stateFormulaNameOp) (getEditedFormulaName s)
-  withBorderStyle BS.unicodeBold
-    . B.border
+  withBorderStyle unicodeBold
+    . border
     . hLimit leftWidth
     . vBox
     $ [ drawFormulaJumpTo s
@@ -115,8 +105,8 @@ drawFormula isSelected formula =
 --
 mainArea :: TuiState -> Widget RName
 mainArea s =
-  C.vCenter
-    . C.hCenter
+  vCenter
+    . hCenter
     . vBox
     $ [maybe selectFormulaText displayFormulaInfo selectedFormula, drawFormulaInput s]
  where
@@ -132,9 +122,9 @@ mainArea s =
 
 displayInfo :: BrewFormula -> Widget RName
 displayInfo formula =
-  B.border
-    . C.vCenter
-    . C.hCenter
+  border
+    . vCenter
+    . hCenter
     . hBox
     $ [ padLeft (Pad 3)
         . padTop (Pad 1)
@@ -151,10 +141,10 @@ displayDependencies :: BrewFormula -> Widget RName
 displayDependencies formula = case formulaDependencies formula of
   [] -> emptyWidget
   ds ->
-    B.border
+    border
       . vLimit 3
-      . C.vCenter
-      . C.hCenter
+      . vCenter
+      . hCenter
       . hBox
       $ [ padLeft (Pad 3)
           . padTop (Pad 1)
@@ -173,10 +163,10 @@ displayDependants :: BrewFormula -> Widget RName
 displayDependants formula = case formulaDependants formula of
   [] -> emptyWidget
   ds ->
-    B.border
+    border
       . vLimit 3
-      . C.vCenter
-      . C.hCenter
+      . vCenter
+      . hCenter
       . hBox
       $ [ padLeft (Pad 3)
           . padTop (Pad 1)
@@ -193,11 +183,11 @@ displayDependants formula = case formulaDependants formula of
 --
 status :: TuiState -> Widget RName
 status s =
-  withBorderStyle BS.unicodeBold
-    . B.border
+  withBorderStyle unicodeBold
+    . border
     . vLimit bottomHeight
-    . C.vCenter
-    . C.hCenter
+    . vCenter
+    . hCenter
     . hBox
     $ [ vBox
           [ padLeft (Pad 3) . padRight Max . padBottom Max . strWrap $ maybe
@@ -211,12 +201,12 @@ status s =
 --
 help :: Widget RName
 help =
-  withBorderStyle BS.unicodeBold
-    . B.border
+  withBorderStyle unicodeBold
+    . border
     . hLimit leftWidth
     . vLimit bottomHeight
-    . C.vCenter
-    . C.hCenter
+    . vCenter
+    . hCenter
     . hBox
     $ [ padRight Max
         . vBox
@@ -242,14 +232,9 @@ drawFormulaInput s = if s ^. stateFormulaNameOp `elem` [FormulaSearch, FormulaIn
 
 drawFormulaNameEdit :: TuiState -> Widget RName
 drawFormulaNameEdit state =
-  withBorderStyle BS.unicodeBold
-    .   B.border
-    .   vLimit 1
-    .   padLeft (Pad 3)
-    $   label
-    <+> editor
+  withBorderStyle unicodeBold . border . vLimit 1 . padLeft (Pad 3) $ label <+> editor
  where
-  editor = E.renderEditor (str . unlines) True (state ^. stateFormulaNameEditL)
+  editor = renderEditor (str . unlines) True (state ^. stateFormulaNameEditL)
   label  = str . (++ ": ") . show . _stateFormulaNameOp $ state
 
 leftWidth :: Int

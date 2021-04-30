@@ -1,24 +1,27 @@
 module Tui.State where
 
-import qualified Brick                         as B
-import qualified Brick.Widgets.Edit            as E
 import qualified Data.List.NonEmpty            as NE
 
+import           Brick                          ( EventM
+                                                , Next
+                                                )
+import           Brick.Widgets.Edit             ( Editor
+                                                , editor
+                                                , getEditContents
+                                                )
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , makeNonEmptyCursor
-                                                )
-import           Data.Brew                      ( BrewError
-                                                , BrewFormula(..)
-                                                , emptyFormulaList
                                                 )
 import           Data.Char                      ( toLower )
 import           Lens.Micro                     ( Lens'
                                                 , lens
                                                 )
 import           Lens.Micro.TH                  ( makeLenses )
+
+import           Data.Brew
 import           Tui.Popup                      ( Popup )
 
-type NewState = B.EventM RName (B.Next TuiState)
+type NewState = EventM RName (Next TuiState)
 
 data RName
   = Formulas
@@ -32,7 +35,6 @@ data FormulaOp
   | FormulaInstall
   deriving (Eq)
 
-
 data TuiState = TuiState
   { _stateTitle           :: String
   , _stateFormulas        :: NonEmptyCursor BrewFormula
@@ -41,7 +43,7 @@ data TuiState = TuiState
   , _stateStatus          :: String
   , _stateError           :: Maybe BrewError
   , _statePopup           :: Maybe (Popup RName (TuiState -> NewState))
-  , _stateFormulaNameEdit :: E.Editor String RName
+  , _stateFormulaNameEdit :: Editor String RName
   , _stateFormulaNameOp   :: FormulaOp
   }
 
@@ -81,10 +83,10 @@ emptyState = TuiState { _stateTitle           = "Brewsage"
                       , _stateFormulaNameOp   = FormulaList
                       }
 
-emptyEditor :: E.Editor String RName
-emptyEditor = E.editor FormulaName Nothing ""
+emptyEditor :: Editor String RName
+emptyEditor = editor FormulaName Nothing ""
 
-stateFormulaNameEditL :: Lens' TuiState (E.Editor String RName)
+stateFormulaNameEditL :: Lens' TuiState (Editor String RName)
 stateFormulaNameEditL =
   lens _stateFormulaNameEdit (\state edit -> state { _stateFormulaNameEdit = edit })
 
@@ -93,4 +95,4 @@ stateFormulaNameOpL =
   lens _stateFormulaNameOp (\state op -> state { _stateFormulaNameOp = op })
 
 getEditedFormulaName :: TuiState -> String
-getEditedFormulaName = fmap toLower . unwords . E.getEditContents . _stateFormulaNameEdit
+getEditedFormulaName = fmap toLower . unwords . getEditContents . _stateFormulaNameEdit

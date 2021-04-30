@@ -2,7 +2,6 @@ module Tui.Main
   ( tui
   ) where
 
-import qualified Brick.Widgets.Edit            as E
 import qualified Data.ByteString.Lazy          as B
 import qualified Data.ByteString.Lazy.Char8    as C8
 import qualified Data.List.NonEmpty            as NE
@@ -26,6 +25,7 @@ import           Brick.Types                    ( BrickEvent(VtyEvent)
 import           Brick.Widgets.Core             ( hBox
                                                 , vBox
                                                 )
+import           Brick.Widgets.Edit             ( handleEditorEvent )
 import           Control.Brew.Commands          ( getFormulaInfo
                                                 , installFormula
                                                 , listFormulas
@@ -43,13 +43,13 @@ import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , nonEmptyCursorSelectPrev
                                                 , nonEmptyCursorSelection
                                                 )
+import           Data.Maybe                     ( fromMaybe )
 import           Graphics.Vty.Input.Events      ( Event(EvKey)
                                                 , Key(KChar, KDown, KEnter, KEsc, KUp)
                                                 )
 import           Lens.Micro                     ( (^.) )
 
 import           Data.Brew
-import           Data.Maybe                     ( fromMaybe )
 import           Tui.State
 
 
@@ -149,7 +149,7 @@ handleChrEvent ev s f = maybe handleEditorChrEvent (const $ continue s) (s ^. st
 -- | handle events in editor
 handleEditor :: TuiState -> Event -> NewState
 handleEditor state event =
-  continue =<< handleEventLensed state stateFormulaNameEditL E.handleEditorEvent event
+  continue =<< handleEventLensed state stateFormulaNameEditL handleEditorEvent event
 
 -- | handle other events
 handleOtherKeys :: Event -> TuiState -> NewState
