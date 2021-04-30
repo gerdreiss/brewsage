@@ -99,7 +99,6 @@ handleTuiEvent :: TuiState -> BrickEvent n e -> NewState
 handleTuiEvent s (VtyEvent (EvKey KDown _)) = scroll down nonEmptyCursorSelectNext s
 handleTuiEvent s (VtyEvent (EvKey KUp _)) = scroll up nonEmptyCursorSelectPrev s
 handleTuiEvent s (VtyEvent (EvKey KEsc _)) = handleEscEvent s
-handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayWithDeps
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar '/') _)) = handleChrEvent ev s displayJumpTo
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 's') _)) = handleChrEvent ev s displaySearch
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'i') _)) = handleChrEvent ev s displayInstall
@@ -107,6 +106,7 @@ handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'u') _)) = handleChrEvent ev s unins
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'U') _)) = handleChrEvent ev s upgradeAll
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'a') _)) = handleChrEvent ev s displayAbout
 handleTuiEvent s (VtyEvent ev@(EvKey (KChar 'q') _)) = handleChrEvent ev s halt
+handleTuiEvent s (VtyEvent (EvKey KEnter _)) = handleEnterEvent s displayWithDeps
 handleTuiEvent s (VtyEvent ev@(EvKey _ _)) = handleOtherKeys ev s
 handleTuiEvent s _ = continue s
 
@@ -138,25 +138,6 @@ handleEscEvent s = continue s { _statePopup           = Nothing
                               , _stateStatus          = "Ready"
                               }
 
--- | handle the enter
-handleEnterEvent :: TuiState -> (TuiState -> NewState) -> NewState
-handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup)
- where
-  execFormulaOp = do
-    let name = getEditedFormulaName s
-    case s ^. stateFormulaNameOp of
-      FormulaList    -> f s
-      FormulaSearch  -> displayFullInfo name s
-      FormulaInstall -> install name s
-      FormulaJumpTo  -> f s { _stateFormulas = selectFormula name (s ^. stateFormulas) }
-
-selectFormula :: String -> NonEmptyCursor BrewFormula -> NonEmptyCursor BrewFormula
-selectFormula name fs = fromMaybe fs (nonEmptyCursorSelectIndex idx fs)
- where
-  idx   = maybe 0 nonEmptyCursorSelection found
-  found = nonEmptyCursorSearch prefix fs
-  prefix formula = C8.pack name `B.isPrefixOf` formulaName formula
-
 -- | handle character input depending on the popup being displayed or not
 handleChrEvent :: Event -> TuiState -> (TuiState -> NewState) -> NewState
 handleChrEvent ev s f = maybe handleEditorChrEvent (const $ continue s) (s ^. statePopup)
@@ -177,34 +158,8 @@ handleOtherKeys ev s = maybe
   (const $ continue s)
   (s ^. statePopup)
 
--- | display the selected formula
-displayWithDeps :: TuiState -> NewState
-displayWithDeps s = do
-  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . _stateFormulas $ s
-  case selected of
-    Left err -> continue s { _stateStatus = "Error occurred", _stateError = Just err }
-    Right formula -> continue s
-      { _stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
-      , _stateSelectedFormula = Just formula
-      }
-
--- | search and display formula info
-displayFullInfo :: String -> TuiState -> NewState
-displayFullInfo name s = do
-  info <- liftIO $ getFormulaInfo True $ mkFormula name
-  case info of
-    Left  err     -> continue s { _stateStatus          = "Error occurred"
-                                , _stateError           = Just err
-                                , _stateFormulaNameOp   = FormulaList
-                                , _stateFormulaNameEdit = emptyEditor
-                                }
-    Right formula -> continue s
-      { _stateStatus          = (++ " found") . C8.unpack . formulaName $ formula
-      , _stateSelectedFormula = Just formula
-      , _stateFormulaNameOp   = FormulaList
-      , _stateFormulaNameEdit = emptyEditor
-      }
-
+--
+--
 -- | display the 'About' dialog
 displayAbout :: TuiState -> NewState
 displayAbout s = continue s
@@ -241,6 +196,57 @@ displayInstall s = continue s { _stateFormulaNameOp   = FormulaInstall
                               , _stateStatus          = "Install formula"
                               }
 
+--
+--
+-- | handle the enter
+handleEnterEvent :: TuiState -> (TuiState -> NewState) -> NewState
+handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup)
+ where
+  execFormulaOp = do
+    let name = getEditedFormulaName s
+    case s ^. stateFormulaNameOp of
+      FormulaList    -> f s
+      FormulaSearch  -> displayFullInfo name s
+      FormulaInstall -> install name s
+      FormulaJumpTo  -> f s { _stateFormulas = selectFormula name (s ^. stateFormulas) }
+
+selectFormula :: String -> NonEmptyCursor BrewFormula -> NonEmptyCursor BrewFormula
+selectFormula name fs = fromMaybe fs (nonEmptyCursorSelectIndex idx fs)
+ where
+  idx   = maybe 0 nonEmptyCursorSelection found
+  found = nonEmptyCursorSearch prefix fs
+  prefix formula = C8.pack name `B.isPrefixOf` formulaName formula
+
+-- | display the selected formula
+displayWithDeps :: TuiState -> NewState
+displayWithDeps s = suspendAndResume $ do
+  selected <- liftIO . getCompleteFormulaInfo . nonEmptyCursorCurrent . _stateFormulas $ s
+  case selected of
+    Left  err     -> return s { _stateStatus = "Error occurred", _stateError = Just err }
+    Right formula -> return s
+      { _stateStatus          = (C8.unpack . formulaName $ formula) ++ " displayed"
+      , _stateSelectedFormula = Just formula
+      , _stateError           = Nothing
+      }
+
+-- | search and display formula info
+displayFullInfo :: String -> TuiState -> NewState
+displayFullInfo name s = suspendAndResume $ do
+  info <- liftIO $ getFormulaInfo True $ mkFormula name
+  case info of
+    Left  err     -> return s { _stateStatus          = "Error occurred"
+                              , _stateError           = Just err
+                              , _stateFormulaNameOp   = FormulaList
+                              , _stateFormulaNameEdit = emptyEditor
+                              }
+    Right formula -> return s
+      { _stateStatus          = (++ " found") . C8.unpack . formulaName $ formula
+      , _stateSelectedFormula = Just formula
+      , _stateFormulaNameOp   = FormulaList
+      , _stateFormulaNameEdit = emptyEditor
+      , _stateError           = Nothing
+      }
+
 -- | upgrade all formulas
 upgradeAll :: TuiState -> NewState
 upgradeAll s = suspendAndResume $ do
@@ -256,6 +262,7 @@ upgradeAll s = suspendAndResume $ do
                                      . fmap formulaName
                                      $ formulas
                                      )
+      , _stateError           = Nothing
       }
 
 -- | install formula
@@ -269,6 +276,7 @@ install formula s = suspendAndResume $ do
                           , _stateStatus          = formula ++ " uninstalled"
                           , _stateFormulaNameOp   = FormulaList
                           , _stateFormulaNameEdit = emptyEditor
+                          , _stateError           = Nothing
                           }
 
 -- | uninstall the selected formula
@@ -285,4 +293,5 @@ uninstall s = suspendAndResume $ do
           { _stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
           , _stateSelectedFormula = Nothing
           , _stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
+          , _stateError           = Nothing
           }

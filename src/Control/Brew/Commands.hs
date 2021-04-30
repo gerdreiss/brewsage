@@ -39,16 +39,27 @@ listFormulas = processListResult <$> execBrewList
 -- load formula info for the given formula
 getFormulaInfo :: Bool -> BrewFormula -> IO ErrorOrFormula
 getFormulaInfo full formula =
-  processInfoResult full <$> (execBrewInfo . formulaName $ formula)
+  logOp >> processInfoResult full <$> (execBrewInfo . formulaName $ formula)
+ where
+  logOp = putStrLn
+    $ concat ["retrieving formula info for '", C8.unpack (formulaName formula), "'..."]
 
 -- load usage info for the given formula
 getFormulaUsage :: BrewFormula -> IO ErrorOrFormula
 getFormulaUsage formula =
-  fmap (\deps -> formula { formulaDependants = deps }) <$> listDependants formula
+  logOp >> fmap (\deps -> formula { formulaDependants = deps }) <$> listDependants formula
+ where
+  logOp = putStrLn $ concat
+    ["retrieving formula dependants for '", C8.unpack (formulaName formula), "'..."]
 
 getFormulaDeps :: BrewFormula -> IO ErrorOrFormula
 getFormulaDeps formula =
-  fmap (\deps -> formula { formulaDependencies = deps }) <$> listDependencies formula
+  logOp
+    >>  fmap (\deps -> formula { formulaDependencies = deps })
+    <$> listDependencies formula
+ where
+  logOp = putStrLn $ concat
+    ["retrieving formula dependencies for '", C8.unpack (formulaName formula), "'..."]
 
 -- list dependants of the given formula
 listDependants :: BrewFormula -> IO ErrorOrFormulas
