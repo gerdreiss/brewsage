@@ -21,17 +21,18 @@ description: Please see the README on GitHub at <https://github.com/gerdreiss/br
 
 dependencies:
   - base >= 4.7 && < 5
-  - typed-process
-  - bytestring
-  - split
-  - parallel-io
-  - time
+  - ansi-terminal
   - brick
-  - vty
+  - bytestring
   - cursor
-  - text
   - microlens
   - microlens-th
+  - parallel-io
+  - split
+  - text
+  - time
+  - typed-process
+  - vty
 
 library:
   source-dirs: src

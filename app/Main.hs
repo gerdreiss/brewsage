@@ -10,6 +10,7 @@ import           Data.Either                    ( lefts
 import           Data.Time                      ( diffUTCTime
                                                 , getCurrentTime
                                                 )
+import           System.Console.ANSI            ( clearScreen )
 import           System.Environment             ( getArgs )
 import           System.IO                      ( hFlush
                                                 , stdout
@@ -18,6 +19,7 @@ import           Tui.Main                       ( tui )
 
 main :: IO ()
 main = do
+  clearScreen
   args <- getArgs
   case args of
     ("--tui" : _) -> do
