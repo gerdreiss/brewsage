@@ -3,7 +3,6 @@ module Tui.State where
 import qualified Brick                         as B
 import qualified Brick.Widgets.Edit            as E
 import qualified Data.List.NonEmpty            as NE
-import qualified Data.Text                     as T
 
 import           Cursor.Simple.List.NonEmpty    ( NonEmptyCursor
                                                 , makeNonEmptyCursor
@@ -94,4 +93,4 @@ stateFormulaNameOpL =
   lens _stateFormulaNameOp (\state op -> state { _stateFormulaNameOp = op })
 
 getEditedFormulaName :: TuiState -> String
-getEditedFormulaName = map toLower . unwords . E.getEditContents . _stateFormulaNameEdit
+getEditedFormulaName = fmap toLower . unwords . E.getEditContents . _stateFormulaNameEdit

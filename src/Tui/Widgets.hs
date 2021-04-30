@@ -163,7 +163,7 @@ displayDependencies formula = case formulaDependencies formula of
           . ("Depends on " ++)
           . C8.unpack
           . C8.intercalate (C8.pack ", ")
-          . map formulaName
+          . fmap formulaName
           $ ds
         ]
 
@@ -185,7 +185,7 @@ displayDependants formula = case formulaDependants formula of
           . ("Required by " ++)
           . C8.unpack
           . C8.intercalate (C8.pack ", ")
-          . map formulaName
+          . fmap formulaName
           $ ds
         ]
 
