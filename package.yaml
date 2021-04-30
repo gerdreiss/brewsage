@@ -3,8 +3,8 @@ version: 0.1.0.0
 github: "gerdreiss/brewsage"
 license: BSD3
 author: "Gerd Reiss"
-maintainer: "gerdreiss@jscriptive.com"
-copyright: "jscriptive.com"
+maintainer: "gerd@reiss.pro"
+copyright: "Gerd Reiss 2019"
 
 extra-source-files:
   - README.md
@@ -54,16 +54,5 @@ executables:
       - -Wwarn=unused-imports
     default-extensions:
       - OverloadedStrings
-    dependencies:
-      - brewsage
-
-tests:
-  brewsage-test:
-    main: Spec.hs
-    source-dirs: test
-    ghc-options:
-      - -threaded
-      - -rtsopts
-      - -with-rtsopts=-N
     dependencies:
       - brewsage
