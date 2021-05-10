@@ -273,7 +273,7 @@ install formula s = suspendAndResume $ do
     Left  err -> return s { _stateStatus = "Error occurred", _stateError = Just err }
     Right fs  -> return s { _stateFormulas        = makeNonEmptyCursor $ NE.fromList fs
                           , _stateSelectedFormula = Nothing
-                          , _stateStatus          = formula ++ " uninstalled"
+                          , _stateStatus          = formula ++ " installed"
                           , _stateFormulaNameOp   = FormulaList
                           , _stateFormulaNameEdit = emptyEditor
                           , _stateError           = Nothing
