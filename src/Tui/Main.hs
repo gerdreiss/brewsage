@@ -208,7 +208,7 @@ handleEnterEvent s f = maybe execFormulaOp (const $ continue s) (s ^. statePopup
       FormulaList    -> f s
       FormulaSearch  -> displayFullInfo name s
       FormulaInstall -> install name s
-      FormulaJumpTo  -> f s { _stateFormulas = selectFormula name (s ^. stateFormulas) }
+      FormulaJumpTo  -> displayFullInfoAfterJump name s f
 
 selectFormula :: String -> NonEmptyCursor BrewFormula -> NonEmptyCursor BrewFormula
 selectFormula name fs = fromMaybe fs (nonEmptyCursorSelectIndex idx fs)
@@ -295,3 +295,11 @@ uninstall s = suspendAndResume $ do
           , _stateStatus          = (C8.unpack . formulaName $ formula) ++ " uninstalled"
           , _stateError           = Nothing
           }
+
+-- | display selected formula emptying the formula name edit
+displayFullInfoAfterJump :: String -> TuiState -> (TuiState -> NewState) -> NewState
+displayFullInfoAfterJump name s f = f s
+  { _stateFormulaNameOp   = FormulaList
+  , _stateFormulas        = selectFormula name (s ^. stateFormulas)
+  , _stateFormulaNameEdit = emptyEditor
+  }
