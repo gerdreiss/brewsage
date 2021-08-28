@@ -7,6 +7,7 @@ import           Data.Brew                      ( Answer(..)
                                                 , BrewFormula(..)
                                                 )
 import           Data.ByteString.Lazy.Char8     ( unpack )
+import           Data.List                      ( intercalate )
 import           System.Exit                    ( exitSuccess )
 import           System.IO                      ( hFlush
                                                 , stdout
@@ -23,7 +24,7 @@ procFormulas formulas = do
 --
 procFormula :: BrewFormula -> IO ()
 procFormula formula
-  | not . null . formulaDependants $ formula = print formula
+  | not . null . formulaDependants $ formula = printFormulaWithDependants
   | otherwise = do
     answer <- askDeleteFormula formula
     case answer of
@@ -31,11 +32,19 @@ procFormula formula
       Yes  -> deleteFormula formula
       Quit -> putStrLn "Exit..." >> exitSuccess
       Que  -> putStrLn "Did not get that. Try again." >> procFormula formula
+ where
+  printFormulaWithDependants =
+    putStrLn $ concat [dependantList, quantifiedVerb, unpack . formulaName $ formula]
+  dependantList =
+    intercalate ", " . map (unpack . formulaName) $ formulaDependants formula
+  quantifiedVerb =
+    if (length . formulaDependants $ formula) == 1 then " depends on " else " depend on "
 
 -- ask the user whether to delete the unused formula
 askDeleteFormula :: BrewFormula -> IO Answer
 askDeleteFormula formula = do
-  putStr (show formula ++ "Delete? (q/y/N) ")
+  putStr
+    ("no formulas depend on " ++ unpack (formulaName formula) ++ " - delete? (q/y/N) ")
   hFlush stdout
   read <$> getLine
 

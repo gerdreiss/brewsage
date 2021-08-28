@@ -28,7 +28,7 @@ main = do
         Left  err      -> print err
         Right formulas -> tui formulas
     _             -> do
-      putStr "Reading formula information... "
+      putStrLn "Reading formula information... "
       hFlush stdout
       start    <- getCurrentTime
       formulas <- listFormulasComplete
