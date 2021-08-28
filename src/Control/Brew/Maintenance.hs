@@ -38,13 +38,12 @@ procFormula formula
   dependantList =
     intercalate ", " . map (unpack . formulaName) $ formulaDependants formula
   quantifiedVerb =
-    if (length . formulaDependants $ formula) == 1 then " depends on " else " depend on "
+    if (length . formulaDependants $ formula) == 1 then " requires " else " require "
 
 -- ask the user whether to delete the unused formula
 askDeleteFormula :: BrewFormula -> IO Answer
 askDeleteFormula formula = do
-  putStr
-    ("no formulas depend on " ++ unpack (formulaName formula) ++ " - delete? (q/y/N) ")
+  putStr ("no formulas require " ++ unpack (formulaName formula) ++ " - delete? (q/y/N) ")
   hFlush stdout
   read <$> getLine
 
