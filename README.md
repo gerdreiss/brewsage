@@ -1,4 +1,4 @@
-# brewsage
+# brewsage (brew usage)
 
 ## CLI
 
