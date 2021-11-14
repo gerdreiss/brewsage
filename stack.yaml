@@ -1,4 +1,2 @@
-resolver: lts-18.15
-extra-deps:
-  - parallel-io-0.3.5@sha256:97db32eb84b3141f4957f6d208c0ef8adce647cbf68099417e93c7d9a45f9b35,3482
+resolver: lts-18.16
 
