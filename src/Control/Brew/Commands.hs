@@ -130,10 +130,13 @@ processListResult (ExitSuccess   , out, _  ) = Right
 -- process results of a brew info command
 processInfoResult :: Bool -> ReadProcessResult -> ErrorOrFormula
 processInfoResult _    (ExitFailure code, _  , err) = Left (BrewError code err)
-processInfoResult full (ExitSuccess     , out, _  ) = Right formula where
-  formula = BrewFormula name version info [] []
-  name    = C8.takeWhile (/= ':') out
-  version = Just $ C8.words out !! 2
-  info    = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
-  infoLines =
-    if full then C8.lines out else takeWhile (not . B.isPrefixOf "==>") $ C8.lines out
+processInfoResult full (ExitSuccess     , out, _  ) = Right formula
+ where
+  formula   = BrewFormula name version info [] []
+  name      = C8.takeWhile (/= ':') . C8.drop 4 $ out
+  version   = Just $ C8.words out !! 3
+  info      = Just . C8.intercalate (C8.pack "\n") . filter (not . C8.null) $ infoLines
+  infoLines = if full
+    then C8.lines out
+    else takeWhile (not . B.isPrefixOf "==>") . C8.lines . C8.drop 4 $ out
+
