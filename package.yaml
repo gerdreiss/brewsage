@@ -34,6 +34,17 @@ dependencies:
   - typed-process
   - vty
 
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
 library:
   source-dirs: src
   default-extensions:
