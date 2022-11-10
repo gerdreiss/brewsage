@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Data.Brew where
 
 import qualified Data.ByteString.Lazy          as B
