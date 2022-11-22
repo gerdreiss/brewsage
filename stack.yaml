@@ -1,5 +1,5 @@
-resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/31.yaml
+resolver: lts-20.1
 
-packages:
-  - .
+extra-deps:
+- brick-0.70.1@sha256:1c83fa171c70b084927a6961da6dfb0b586063b743dce405dec3ac92fa7edaf1,16337
+- vty-5.33@sha256:8da1652d64e24c9e011384628de340b2877f0148de7ef57baf66cd2e9a35c6c6,22294

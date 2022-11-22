@@ -22,7 +22,7 @@ description: Please see the README on GitHub at <https://github.com/gerdreiss/br
 dependencies:
   - base >= 4.7 && < 5
   - ansi-terminal
-  - brick
+  - brick <= 0.70.1
   - bytestring
   - cursor
   - microlens
@@ -32,7 +32,7 @@ dependencies:
   - text
   - time
   - typed-process
-  - vty
+  - vty <= 5.33
 
 ghc-options:
   - -Wall
